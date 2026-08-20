@@ -33,7 +33,6 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
           'city',
           'street',
           'house_number',
-          'gender',
           'parent_first_name',
           'parent_last_name',
           'parent_mobile',

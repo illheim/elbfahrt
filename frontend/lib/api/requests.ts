@@ -9,8 +9,6 @@ import { api } from './client';
 import type {
   RideRequest,
   Recurrence,
-  GenderFilter,
-  Gender,
   ListResponse,
   SingleResponse,
 } from './types';
@@ -31,7 +29,6 @@ export interface CreateRideRequestInput {
   recurrence_until?: string | null;
   seats_needed: number;
   notes?: string | null;
-  gender_filter: GenderFilter;
 }
 
 export async function createRideRequest(
@@ -52,9 +49,6 @@ export interface RequestPassenger {
   id: number;
   documentId?: string;
   first_name: string;
-  gender: Gender | null;
-  is_smoker: boolean;
-  travels_with_pets: boolean;
 }
 
 export type RideRequestListItem = Omit<RideRequest, 'passenger'> & {

@@ -136,11 +136,6 @@ export default function RideDetailPage() {
           {(ride.flexible_origin || ride.flexible_destination) && (
             <Badge>±1 km flexibel</Badge>
           )}
-          {ride.gender_filter === 'same_only' && (
-            <Badge>nur gleiches Geschlecht</Badge>
-          )}
-          {ride.driver?.is_smoker && <Badge>Raucher:in</Badge>}
-          {ride.driver?.travels_with_pets && <Badge>Haustiere</Badge>}
         </div>
 
         {ride.notes && (

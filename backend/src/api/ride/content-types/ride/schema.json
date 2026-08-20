@@ -58,12 +58,6 @@
     },
     "route_distance_m": { "type": "integer" },
     "route_duration_s": { "type": "integer" },
-    "gender_filter": {
-      "type": "enumeration",
-      "enum": ["none", "same_only"],
-      "default": "none",
-      "required": true
-    },
     "bookings": {
       "type": "relation",
       "relation": "oneToMany",

@@ -3,9 +3,9 @@
 /**
  * Mein Profil — the signed-in user edits their own details.
  *
- * Editable via PUT /me/profile: name, mobile, address, gender, and the
- * smoker/pets preferences. Email and date of birth are read-only (email is the
- * login; DOB drives the under-18 rules). A danger zone deletes the account
+ * Editable via PUT /me/profile: name, mobile, and address. Email and date of
+ * birth are read-only (email is the login; DOB drives the under-18 rules). A
+ * danger zone deletes the account
  * (DELETE /me/account), which also removes the user's rides, Gesuche and
  * bookings server-side.
  */
@@ -17,7 +17,7 @@ import { useRequireAuth } from '@/lib/auth/useRequireAuth';
 import { useAuth } from '@/lib/auth/context';
 import { ApiError } from '@/lib/api/client';
 import { updateProfile, deleteAccount } from '@/lib/api/auth';
-import type { Gender, User } from '@/lib/api/types';
+import type { User } from '@/lib/api/types';
 
 interface FormState {
   first_name: string;
@@ -27,9 +27,6 @@ interface FormState {
   house_number: string;
   postal_code: string;
   city: string;
-  gender: Gender | '';
-  is_smoker: boolean;
-  travels_with_pets: boolean;
 }
 
 export default function ProfilePage() {
@@ -52,9 +49,6 @@ function ProfileForm({ user }: { user: User }) {
     house_number: user.house_number ?? '',
     postal_code: user.postal_code ?? '',
     city: user.city ?? '',
-    gender: user.gender ?? '',
-    is_smoker: !!user.is_smoker,
-    travels_with_pets: !!user.travels_with_pets,
   }));
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -82,9 +76,6 @@ function ProfileForm({ user }: { user: User }) {
         house_number: form.house_number,
         postal_code: form.postal_code,
         city: form.city,
-        gender: form.gender === '' ? null : form.gender,
-        is_smoker: form.is_smoker,
-        travels_with_pets: form.travels_with_pets,
       });
       await refresh();
       setSaved(true);
@@ -215,40 +206,6 @@ function ProfileForm({ user }: { user: User }) {
           </Field>
         </fieldset>
 
-        <fieldset className="flex flex-col gap-3">
-          <legend className="text-sm font-medium text-neutral-700">
-            Präferenzen
-          </legend>
-          <Field label="Geschlecht (optional)">
-            <select
-              value={form.gender}
-              onChange={(e) => set('gender', e.target.value as Gender | '')}
-              className={inputClass}
-            >
-              <option value="">— keine Angabe —</option>
-              <option value="m">männlich</option>
-              <option value="w">weiblich</option>
-              <option value="non_binaer">non-binär</option>
-            </select>
-          </Field>
-          <label className="flex items-center gap-2 text-sm text-neutral-700">
-            <input
-              type="checkbox"
-              checked={form.is_smoker}
-              onChange={(e) => set('is_smoker', e.target.checked)}
-            />
-            Ich rauche
-          </label>
-          <label className="flex items-center gap-2 text-sm text-neutral-700">
-            <input
-              type="checkbox"
-              checked={form.travels_with_pets}
-              onChange={(e) => set('travels_with_pets', e.target.checked)}
-            />
-            Ich reise mit Haustier
-          </label>
-        </fieldset>
-
         {error && (
           <div
             role="alert"
@@ -272,13 +229,28 @@ function ProfileForm({ user }: { user: User }) {
         </button>
       </form>
 
-      <section className="mt-2 flex flex-col gap-3 rounded-md border border-red-200 bg-red-50/50 p-4">
-        <h2 className="text-sm font-semibold text-red-900">Konto löschen</h2>
-        <p className="text-sm text-neutral-700">
-          Dies entfernt Ihr Konto dauerhaft – zusammen mit Ihren Fahrten,
-          Gesuchen und Buchungen. Das lässt sich nicht rückgängig machen.
-        </p>
-        {!confirmDelete ? (
+      <details className="group mt-2 rounded-md border border-red-200 bg-red-50/50">
+        <summary className="flex cursor-pointer list-none items-center justify-between p-4 text-sm font-semibold text-red-900 [&::-webkit-details-marker]:hidden">
+          Konto löschen
+          <svg
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden="true"
+            className="h-4 w-4 transition-transform group-open:rotate-180"
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </summary>
+        <div className="flex flex-col gap-3 px-4 pb-4">
+          <p className="text-sm text-neutral-700">
+            Dies entfernt Ihr Konto dauerhaft – zusammen mit Ihren Fahrten,
+            Gesuchen und Buchungen. Das lässt sich nicht rückgängig machen.
+          </p>
+          {!confirmDelete ? (
           <button
             type="button"
             onClick={() => setConfirmDelete(true)}
@@ -305,8 +277,9 @@ function ProfileForm({ user }: { user: User }) {
               Abbrechen
             </button>
           </div>
-        )}
-      </section>
+          )}
+        </div>
+      </details>
     </main>
   );
 }

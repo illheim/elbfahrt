@@ -48,12 +48,6 @@
       "enum": ["active", "fulfilled", "cancelled"],
       "default": "active",
       "required": true
-    },
-    "gender_filter": {
-      "type": "enumeration",
-      "enum": ["none", "same_only"],
-      "default": "none",
-      "required": true
     }
   }
 }

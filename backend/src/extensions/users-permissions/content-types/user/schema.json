@@ -66,11 +66,6 @@
     "street": { "type": "string", "required": true, "maxLength": 200 },
     "house_number": { "type": "string", "required": true, "maxLength": 20 },
 
-    "gender": {
-      "type": "enumeration",
-      "enum": ["m", "w", "non_binaer"]
-    },
-
     "parent_first_name": { "type": "string", "maxLength": 100 },
     "parent_last_name": { "type": "string", "maxLength": 100 },
     "parent_mobile": { "type": "string", "maxLength": 30 },
@@ -86,10 +81,6 @@
       "enum": ["personalausweis", "fuehrerschein"]
     },
     "driver_verified_at": { "type": "datetime" },
-
-    "is_smoker": { "type": "boolean", "default": false },
-    "travels_with_pets": { "type": "boolean", "default": false },
-    "prefer_same_gender": { "type": "boolean", "default": false },
 
     "rides_offered": {
       "type": "relation",

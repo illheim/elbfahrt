@@ -19,12 +19,7 @@
  * Widen this deliberately (e.g. add `last_name`) if the Verein decides fuller
  * names should be visible before booking — it's the single source of truth.
  */
-export const SAFE_USER_FIELDS = [
-  'first_name',
-  'gender',
-  'is_smoker',
-  'travels_with_pets',
-] as const;
+export const SAFE_USER_FIELDS = ['first_name'] as const;
 
 /**
  * The second, wider tier: contact details shared ONLY through the

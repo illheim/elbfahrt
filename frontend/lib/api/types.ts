@@ -8,8 +8,6 @@
  * /api/auth/local skip the wrapper entirely.
  */
 
-export type Gender = 'm' | 'w' | 'non_binaer';
-
 export type UserRole = 'driver' | 'passenger';
 
 export type DriverStatus = 'pending_review' | 'approved' | 'rejected';
@@ -17,8 +15,6 @@ export type DriverStatus = 'pending_review' | 'approved' | 'rejected';
 export type DriverIdType = 'personalausweis' | 'fuehrerschein';
 
 export type Recurrence = 'none' | 'weekly' | 'daily';
-
-export type GenderFilter = 'none' | 'same_only';
 
 export type RideStatus = 'active' | 'cancelled' | 'completed';
 
@@ -47,8 +43,6 @@ export interface User {
   street: string;
   house_number: string;
 
-  gender: Gender | null;
-
   parent_first_name: string | null;
   parent_last_name: string | null;
   parent_mobile: string | null;
@@ -58,10 +52,6 @@ export interface User {
   driver_status: DriverStatus | null;
   driver_id_type: DriverIdType | null;
   driver_verified_at: string | null;
-
-  is_smoker: boolean;
-  travels_with_pets: boolean;
-  prefer_same_gender: boolean;
 
   createdAt: string;
   updatedAt: string;
@@ -97,8 +87,6 @@ export interface Ride {
   route_distance_m: number | null;
   route_duration_s: number | null;
 
-  gender_filter: GenderFilter;
-
   createdAt: string;
   updatedAt: string;
 }
@@ -129,8 +117,6 @@ export interface RideRequest {
   seats_needed: number;
   notes: string | null;
   status: RideRequestStatus;
-
-  gender_filter: GenderFilter;
 
   createdAt: string;
   updatedAt: string;

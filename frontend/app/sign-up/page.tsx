@@ -29,7 +29,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { ApiError, getToken } from '@/lib/api/client';
 import { PasswordInput } from '@/components/PasswordInput';
-import type { Gender } from '@/lib/api/types';
 
 function calculateAgeYears(dob: string): number | null {
   if (!dob) return null;
@@ -68,7 +67,6 @@ export default function SignUpPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
-  const [gender, setGender] = useState<Gender | ''>('');
 
   // Contact + credentials
   const [email, setEmail] = useState('');
@@ -123,7 +121,6 @@ export default function SignUpPage() {
         city,
         street,
         house_number: houseNumber,
-        ...(gender ? { gender } : {}),
         ...(isMinor
           ? {
               parent_first_name: parentFirstName,
@@ -164,7 +161,7 @@ export default function SignUpPage() {
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold">Konto erstellen</h1>
         <p className="text-sm text-neutral-600">
-          Alle Felder sind Pflichtfelder, außer Geschlecht.
+          Alle Felder sind Pflichtfelder.
         </p>
       </header>
 
@@ -205,19 +202,6 @@ export default function SignUpPage() {
               onChange={(e) => setDateOfBirth(e.target.value)}
               className={inputClass}
             />
-          </Field>
-
-          <Field label="Geschlecht (optional)">
-            <select
-              value={gender}
-              onChange={(e) => setGender(e.target.value as Gender | '')}
-              className={inputClass}
-            >
-              <option value="">— keine Angabe —</option>
-              <option value="m">männlich</option>
-              <option value="w">weiblich</option>
-              <option value="non_binaer">non-binär</option>
-            </select>
           </Field>
 
           {isMinor && (

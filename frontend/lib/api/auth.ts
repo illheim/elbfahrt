@@ -13,12 +13,7 @@
  */
 
 import { api, setToken, clearToken } from './client';
-import type {
-  User,
-  Gender,
-  UserRole,
-  DriverIdType,
-} from './types';
+import type { User, UserRole, DriverIdType } from './types';
 
 export interface SignUpInput {
   username: string;
@@ -34,8 +29,6 @@ export interface SignUpInput {
   city: string;
   street: string;
   house_number: string;
-
-  gender?: Gender;
 
   parent_first_name?: string;
   parent_last_name?: string;
@@ -97,10 +90,6 @@ export interface UpdateProfileInput {
   first_name?: string;
   last_name?: string;
   mobile?: string;
-  gender?: Gender | null;
-  is_smoker?: boolean;
-  travels_with_pets?: boolean;
-  prefer_same_gender?: boolean;
   postal_code?: string;
   city?: string;
   street?: string;

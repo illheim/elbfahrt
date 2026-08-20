@@ -8,8 +8,23 @@ import { LogoutLink } from './LogoutLink';
 export function Footer() {
   return (
     <footer className="border-t border-neutral-200 bg-white">
-      <div className="mx-auto flex w-full max-w-md flex-col items-center gap-3 px-4 py-6 text-sm text-neutral-600">
+      <div className="mx-auto flex w-full max-w-md flex-col items-center gap-2 px-4 py-4 text-sm text-neutral-600">
         <LogoutLink />
+
+        <div className="flex items-center gap-2">
+          <span className="text-neutral-500">© 2026 Förderverein Binnenmarsch</span>
+          <a
+            href="https://github.com/illheim/elbfahrt"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Quellcode auf GitHub"
+            title="Quellcode auf GitHub"
+            className="text-neutral-500 transition hover:text-neutral-900"
+          >
+            <GitHubMark />
+          </a>
+        </div>
+
         <nav className="flex items-center gap-4">
           <Link href="/impressum" className="underline hover:no-underline">
             Impressum
@@ -27,20 +42,6 @@ export function Footer() {
             Mitmachen
           </Link>
         </nav>
-
-        <div className="flex w-full items-center justify-between">
-          <span className="text-neutral-500">© 2026 Förderverein Binnenmarsch</span>
-          <a
-            href="https://github.com/illheim/elbfahrt"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Quellcode auf GitHub"
-            title="Quellcode auf GitHub"
-            className="text-neutral-500 transition hover:text-neutral-900"
-          >
-            <GitHubMark />
-          </a>
-        </div>
       </div>
     </footer>
   );

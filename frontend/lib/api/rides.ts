@@ -3,9 +3,9 @@
  *
  * The backend ride controller REPLACES the client's populate with a fixed,
  * PII-safe driver projection (see backend safe-user.ts / PLAN Appendix B), so
- * the `driver` we get back is only { first_name, gender, is_smoker,
- * travels_with_pets } (+ id/documentId) — never contact details. We type that
- * narrowly here instead of reusing the full `User`.
+ * the `driver` we get back is only { first_name } (+ id/documentId) — never
+ * contact details. We type that narrowly here instead of reusing the full
+ * `User`.
  *
  * We still send `filters`, `sort` and `pagination`; the controller preserves
  * those and only overrides `populate`.
@@ -14,9 +14,7 @@
 import { api } from './client';
 import type {
   Ride,
-  Gender,
   Recurrence,
-  GenderFilter,
   ListResponse,
   SingleResponse,
 } from './types';
@@ -25,9 +23,6 @@ export interface PublicDriver {
   id: number;
   documentId?: string;
   first_name: string;
-  gender: Gender | null;
-  is_smoker: boolean;
-  travels_with_pets: boolean;
 }
 
 export type RideListItem = Omit<Ride, 'driver'> & {
@@ -73,7 +68,6 @@ export interface CreateRideInput {
   recurrence_until?: string | null; // YYYY-MM-DD
   seats_total: number;
   notes?: string | null;
-  gender_filter: GenderFilter;
 }
 
 export async function createRide(input: CreateRideInput): Promise<Ride> {

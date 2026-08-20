@@ -42,8 +42,6 @@ export default function NewRequestPage() {
   const [until, setUntil] = useState('');
   const [seatsNeeded, setSeatsNeeded] = useState(1);
   const [notes, setNotes] = useState('');
-  // Gender filter hidden for now (v2) — re-add setSameGenderOnly to restore.
-  const [sameGenderOnly] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +105,6 @@ export default function NewRequestPage() {
         recurrence_until: recurrence !== 'none' && until ? until : null,
         seats_needed: seatsNeeded,
         notes: notes.trim() || null,
-        gender_filter: sameGenderOnly ? 'same_only' : 'none',
       });
       setPosted(true);
     } catch (err) {
@@ -302,14 +299,6 @@ export default function NewRequestPage() {
             </label>
           )}
         </fieldset>
-
-        {/* Gender filter hidden for now (v2). Restore the checkbox and the
-            setSameGenderOnly setter to bring it back.
-        <label className="flex items-center gap-2 text-sm text-neutral-700">
-          <input type="checkbox" checked={sameGenderOnly} onChange={(e) => setSameGenderOnly(e.target.checked)} />
-          Nur Fahrer:innen gleichen Geschlechts
-        </label>
-        */}
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium text-neutral-800">

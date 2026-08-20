@@ -73,7 +73,6 @@ export async function seedDev(strapi: any): Promise<void> {
     city: 'Winsen (Luhe)',
     street: 'Bahnhofstraße',
     house_number: '1',
-    gender: 'w',
     roles: ['driver'],
     driver_id_type: 'fuehrerschein',
   });
@@ -104,7 +103,6 @@ export async function seedDev(strapi: any): Promise<void> {
     city: 'Winsen (Luhe)',
     street: 'Marktplatz',
     house_number: '7',
-    gender: 'm',
     roles: ['passenger'],
   });
 
@@ -124,7 +122,6 @@ export async function seedDev(strapi: any): Promise<void> {
     city: 'Winsen (Luhe)',
     street: 'Bahnhofstraße',
     house_number: '1',
-    gender: 'w',
     parent_first_name: 'Anna',
     parent_last_name: 'Hahn',
     parent_mobile: '+4915112345678',
@@ -148,7 +145,6 @@ export async function seedDev(strapi: any): Promise<void> {
       seats_total: 3,
       recurrence: 'none',
       status: 'active',
-      gender_filter: 'none',
     },
   });
 
@@ -169,7 +165,6 @@ export async function seedDev(strapi: any): Promise<void> {
       recurrence_weekdays: [2, 4],
       recurrence_until: dateInDays(180),
       status: 'active',
-      gender_filter: 'none',
     },
   });
 
@@ -188,7 +183,6 @@ export async function seedDev(strapi: any): Promise<void> {
       recurrence: 'daily',
       recurrence_until: dateInDays(90),
       status: 'active',
-      gender_filter: 'none',
     },
   });
 
@@ -207,7 +201,6 @@ export async function seedDev(strapi: any): Promise<void> {
       seats_total: 2,
       recurrence: 'none',
       status: 'active',
-      gender_filter: 'none',
     },
   });
 
@@ -247,7 +240,6 @@ export async function seedDev(strapi: any): Promise<void> {
       seats_needed: 1,
       recurrence: 'none',
       status: 'active',
-      gender_filter: 'none',
     },
   });
 
