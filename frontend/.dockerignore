@@ -1,0 +1,22 @@
+# Don't bring host node_modules into the build — wrong arch, wrong libc
+node_modules
+
+# Build artefacts that the Dockerfile will rebuild
+.next
+.turbo
+out
+
+# Secrets + local-only files
+.env
+.env.*
+
+# Editor / OS noise
+.DS_Store
+*.log
+.git
+.gitignore
+
+# Docs not needed at runtime
+README.md
+AGENTS.md
+CLAUDE.md

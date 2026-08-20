@@ -1,0 +1,20 @@
+{
+  "kind": "singleType",
+  "collectionName": "driver_settings",
+  "info": {
+    "singularName": "driver-settings",
+    "pluralName": "driver-settings-plural",
+    "displayName": "Driver Settings",
+    "description": "Site-wide driver-onboarding policy. Edit in Strapi admin → Content Manager → Single Types."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "auto_approve_drivers": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    }
+  }
+}

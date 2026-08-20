@@ -1,0 +1,74 @@
+{
+  "kind": "collectionType",
+  "collectionName": "rides",
+  "info": {
+    "singularName": "ride",
+    "pluralName": "rides",
+    "displayName": "Ride",
+    "description": "A ride offered by a driver (one-off or recurring)."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "driver": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "rides_offered"
+    },
+    "origin_address": {
+      "type": "string",
+      "required": true,
+      "maxLength": 500
+    },
+    "destination_address": {
+      "type": "string",
+      "required": true,
+      "maxLength": 500
+    },
+    "origin_lat": { "type": "decimal", "required": true },
+    "origin_lng": { "type": "decimal", "required": true },
+    "destination_lat": { "type": "decimal", "required": true },
+    "destination_lng": { "type": "decimal", "required": true },
+    "flexible_origin": { "type": "boolean", "default": false },
+    "flexible_destination": { "type": "boolean", "default": false },
+    "departure_at": { "type": "datetime", "required": true },
+    "return_at": { "type": "datetime" },
+    "recurrence": {
+      "type": "enumeration",
+      "enum": ["none", "weekly", "daily"],
+      "default": "none",
+      "required": true
+    },
+    "recurrence_weekdays": { "type": "json" },
+    "recurrence_until": { "type": "date" },
+    "seats_total": {
+      "type": "integer",
+      "required": true,
+      "min": 1,
+      "max": 8
+    },
+    "notes": { "type": "text" },
+    "status": {
+      "type": "enumeration",
+      "enum": ["active", "cancelled", "completed"],
+      "default": "active",
+      "required": true
+    },
+    "route_distance_m": { "type": "integer" },
+    "route_duration_s": { "type": "integer" },
+    "gender_filter": {
+      "type": "enumeration",
+      "enum": ["none", "same_only"],
+      "default": "none",
+      "required": true
+    },
+    "bookings": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::booking.booking",
+      "mappedBy": "ride"
+    }
+  }
+}

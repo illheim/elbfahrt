@@ -1,0 +1,89 @@
+<mxfile host="app.diagrams.net" agent="elb-fahrt.de" version="24.0.0">
+  <diagram id="elb-fahrt-architecture" name="Architecture">
+    <mxGraphModel dx="960" dy="640" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="620" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="elb-fahrt.de — Service Architecture (Docker Compose)" style="text;html=1;fontSize=15;fontStyle=1;align=left;verticalAlign=middle;fontColor=#2b6b80;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="520" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Internet / Browser -->
+        <mxCell id="browser" value="Browser&#10;(public HTTPS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f2f8fa;strokeColor=#2b6b80;fontColor=#17323b;" vertex="1" parent="1">
+          <mxGeometry x="360" y="70" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Caddy -->
+        <mxCell id="caddy" value="Caddy 2&#10;TLS termination + reverse proxy&#10;:80 / :443" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2b6b80;strokeColor=#1f5060;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="330" y="160" width="220" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Frontend -->
+        <mxCell id="frontend" value="Next.js 16 (Frontend)&#10;App Router · React 19&#10;serves /api/geo/* proxies" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2b6cb0;fontColor=#17323b;" vertex="1" parent="1">
+          <mxGeometry x="150" y="280" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Strapi -->
+        <mxCell id="strapi" value="Strapi 5 (API + Admin)&#10;REST · JWT auth · email" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6f4ea;strokeColor=#2f855a;fontColor=#17323b;" vertex="1" parent="1">
+          <mxGeometry x="520" y="280" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Internal network container -->
+        <mxCell id="internal" value="Internal Docker network — not publicly exposed" style="rounded=1;dashed=1;fillColor=none;strokeColor=#9aa6a0;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontColor=#5a6b72;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="80" y="410" width="700" height="130" as="geometry" />
+        </mxCell>
+
+        <!-- Nominatim -->
+        <mxCell id="nominatim" value="Nominatim 4.3&#10;geocoding" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f7fafc;strokeColor=#5a6b72;fontColor=#17323b;" vertex="1" parent="1">
+          <mxGeometry x="120" y="450" width="150" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- OSRM -->
+        <mxCell id="osrm" value="OSRM&#10;routing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f7fafc;strokeColor=#5a6b72;fontColor=#17323b;" vertex="1" parent="1">
+          <mxGeometry x="310" y="450" width="150" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Postgres -->
+        <mxCell id="postgres" value="PostgreSQL 16&#10;application database" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#ffffff;strokeColor=#5a6b72;fontColor=#17323b;" vertex="1" parent="1">
+          <mxGeometry x="570" y="440" width="140" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Data note -->
+        <mxCell id="datanote" value="Regional OSM extract&#10;+ region.pmtiles (map tiles)" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#5a6b72;" vertex="1" parent="1">
+          <mxGeometry x="120" y="516" width="340" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="e_browser_caddy" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#5a6b72;fontColor=#5a6b72;endArrow=block;" edge="1" parent="1" source="browser" target="caddy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_caddy_frontend" value="elb-fahrt.de" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#5a6b72;fontColor=#5a6b72;endArrow=block;" edge="1" parent="1" source="caddy" target="frontend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_caddy_strapi" value="api.elb-fahrt.de" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#5a6b72;fontColor=#5a6b72;endArrow=block;" edge="1" parent="1" source="caddy" target="strapi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_frontend_strapi" value="REST /api" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#2f855a;fontColor=#2f855a;endArrow=block;" edge="1" parent="1" source="frontend" target="strapi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_frontend_nominatim" value="/api/geo (server-side)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;strokeColor=#5a6b72;fontColor=#5a6b72;endArrow=block;" edge="1" parent="1" source="frontend" target="nominatim">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_frontend_osrm" value="/api/geo (server-side)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;strokeColor=#5a6b72;fontColor=#5a6b72;endArrow=block;" edge="1" parent="1" source="frontend" target="osrm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_strapi_postgres" value="SQL" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#5a6b72;fontColor=#5a6b72;endArrow=block;" edge="1" parent="1" source="strapi" target="postgres">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

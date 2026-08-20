@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "bookings",
+  "info": {
+    "singularName": "booking",
+    "pluralName": "bookings",
+    "displayName": "Booking",
+    "description": "A passenger's seat reservation on a specific ride (or specific date for recurring rides)."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "ride": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::ride.ride",
+      "inversedBy": "bookings"
+    },
+    "passenger": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "bookings"
+    },
+    "booked_at": { "type": "datetime", "required": true },
+    "status": {
+      "type": "enumeration",
+      "enum": ["confirmed", "cancelled_by_passenger", "cancelled_by_driver"],
+      "default": "confirmed",
+      "required": true
+    },
+    "instance_date": { "type": "date" }
+  }
+}

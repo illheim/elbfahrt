@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f3f5f1; /* light sage canvas */
+  --foreground: #263d59; /* navy */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/*
+  elb-fahrt.de palette — "Marsch & Himmel":
+    #263d59 navy · #707f89 slate · #c5cac1 sage · #90bac9 sky · #8c6d4f tan.
+
+  The built-in `neutral` ramp is retuned to this cool family, so every existing
+  `neutral-*` utility (buttons, borders, muted text, backgrounds) picks it up
+  without touching component classes. `accent` = sky (links/highlights),
+  `warm` = tan (badges). red / green / amber stay reserved for status.
+*/
+@theme {
+  --color-neutral-50: #f3f5f1;
+  --color-neutral-100: #e7ebe4;
+  --color-neutral-200: #d7ddd3;
+  --color-neutral-300: #c5cac1; /* sage — borders */
+  --color-neutral-400: #9aa6a0;
+  --color-neutral-500: #707f89; /* slate — muted text */
+  --color-neutral-600: #566673;
+  --color-neutral-700: #3f5266;
+  --color-neutral-800: #2e455f;
+  --color-neutral-900: #263d59; /* navy — primary */
+
+  --color-accent-50: #eef4f7;
+  --color-accent-100: #d9e8ee;
+  --color-accent-200: #bcd6e0;
+  --color-accent-300: #90bac9; /* sky */
+  --color-accent-500: #5f93a6;
+  --color-accent-600: #4c7d90;
+  --color-accent-700: #3d6675; /* readable link text on light */
+
+  --color-warm-100: #efe7dd;
+  --color-warm-500: #8c6d4f; /* tan */
+  --color-warm-600: #75593f;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}

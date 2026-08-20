@@ -1,0 +1,94 @@
+# ============================================================
+#  docker-compose.override.yml — auto-loaded by `docker compose`
+#  Local DEV overrides only. Don't deploy this to Hetzner.
+#  Add this filename to .gitignore? NO — committing is fine; it's
+#  not secret, and the team needs the same dev workflow.
+#
+#  What it does:
+#    - strapi: mounts ./backend so schema files on the host are
+#      visible instantly, runs `npm run develop` (watch + reload),
+#      NODE_ENV=development.
+#    - frontend: mounts ./frontend and runs `npm run dev` (next dev),
+#      so new routes/pages hot-reload — the production image bakes
+#      source at build time and would NOT show host edits.
+#    - Both use a NAMED VOLUME for /app/node_modules so the Linux
+#      modules installed inside the image aren't shadowed by your
+#      macOS/arm64 node_modules from the host (avoids "wrong ELF
+#      class"/sharp/swc errors). The named volume seeds from the
+#      image's node_modules on first `up`.
+# ============================================================
+
+services:
+  strapi:
+    command: ["npm", "run", "develop"]
+    environment:
+      - NODE_ENV=development
+      # Forwards a host SEED env var into the container:
+      #   SEED=true docker compose up -d strapi
+      # Empty by default, so seed.ts skips when not set.
+      - SEED=${SEED:-}
+      # macOS bind-mount file events don't always reach the container, so
+      # Strapi's watcher misses host edits. Force polling.
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./backend:/app
+      - strapi_node_modules:/app/node_modules
+
+  frontend:
+    # We run the frontend on the HOST (`npm run dev`) now, so keep the Docker
+    # frontend out of the default `docker compose up`. It kept resurrecting on
+    # Colima restarts and squatting port 3000 with a stale build. To run it in
+    # Docker anyway: `docker compose --profile docker-frontend up frontend`.
+    profiles: ["docker-frontend"]
+    command: ["npm", "run", "dev"]
+    environment:
+      - NODE_ENV=development
+      # In dev the browser runs on the host and reaches Strapi via the
+      # published port, NOT the production api.elb-fahrt.de subdomain.
+      # NEXT_PUBLIC_* are read at runtime under `next dev` (baked only for
+      # a production build), so this override takes effect.
+      - NEXT_PUBLIC_STRAPI_URL=http://localhost:1337
+      # Server-side only (no NEXT_PUBLIC_): the Next API routes at /api/geo/*
+      # proxy to Nominatim/OSRM over the internal Docker network, so the browser
+      # never talks to them cross-origin and they stay unexposed.
+      - NOMINATIM_URL=http://nominatim:8080
+      - OSRM_URL=http://osrm:5000
+      # macOS bind-mount file events don't always propagate into the container,
+      # so edits weren't hot-reloading. Force polling.
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend:/app
+      # Keep container-native node_modules and .next build cache out of
+      # the host bind-mount.
+      - frontend_node_modules:/app/node_modules
+      - frontend_next:/app/.next
+
+  # Publish the geo services on localhost so the frontend can run on the HOST
+  # (`npm run dev`) and still reach them through the /api/geo/* proxy. When the
+  # frontend runs IN Docker it uses the internal nominatim:8080 / osrm:5000
+  # instead (see NOMINATIM_URL/OSRM_URL above). OSRM is on 5001 to dodge macOS
+  # AirPlay, which squats on 5000.
+  nominatim:
+    ports:
+      - "127.0.0.1:8080:8080"
+
+  osrm:
+    ports:
+      - "127.0.0.1:5001:5000"
+
+  # Dev mail-catcher: Strapi sends confirmation/reset emails to mailpit:1025
+  # (the plugins.ts SMTP defaults), and you read them in the web UI at
+  # http://localhost:8025 — no real SMTP provider needed to test the flow.
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: elbfahrt-mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025" # web UI
+    networks: [app]
+
+volumes:
+  strapi_node_modules:
+  frontend_node_modules:
+  frontend_next:

@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "ride_requests",
+  "info": {
+    "singularName": "ride-request",
+    "pluralName": "ride-requests",
+    "displayName": "Ride Request",
+    "description": "A ride request posted by a passenger seeking a driver."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "passenger": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "ride_requests"
+    },
+    "origin_address": { "type": "string", "required": true, "maxLength": 500 },
+    "destination_address": { "type": "string", "required": true, "maxLength": 500 },
+    "origin_lat": { "type": "decimal", "required": true },
+    "origin_lng": { "type": "decimal", "required": true },
+    "destination_lat": { "type": "decimal", "required": true },
+    "destination_lng": { "type": "decimal", "required": true },
+    "flexible_origin": { "type": "boolean", "default": false },
+    "flexible_destination": { "type": "boolean", "default": false },
+    "departure_at": { "type": "datetime", "required": true },
+    "return_at": { "type": "datetime" },
+    "recurrence": {
+      "type": "enumeration",
+      "enum": ["none", "weekly", "daily"],
+      "default": "none",
+      "required": true
+    },
+    "recurrence_weekdays": { "type": "json" },
+    "recurrence_until": { "type": "date" },
+    "seats_needed": {
+      "type": "integer",
+      "required": true,
+      "default": 1,
+      "min": 1,
+      "max": 8
+    },
+    "notes": { "type": "text" },
+    "status": {
+      "type": "enumeration",
+      "enum": ["active", "fulfilled", "cancelled"],
+      "default": "active",
+      "required": true
+    },
+    "gender_filter": {
+      "type": "enumeration",
+      "enum": ["none", "same_only"],
+      "default": "none",
+      "required": true
+    }
+  }
+}

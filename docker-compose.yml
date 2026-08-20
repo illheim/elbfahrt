@@ -1,0 +1,166 @@
+# ============================================================
+#  elb-fahrt.de — Community Carpooling
+#  Slim self-hosted stack: 6 services
+#    caddy        — HTTPS + reverse proxy
+#    frontend     — Next.js 15 (App Router)
+#    strapi       — Strapi 5 (API + admin)
+#    postgres     — Postgres 16
+#    nominatim    — address geocoding (regional extract)
+#    osrm         — route distance/time (regional extract)
+#
+#  Dropped from the prior Caroster-based attempt:
+#    keycloak     — Strapi's users-permissions plugin covers auth
+#    matrix       — no chat in MVP
+#    ntfy         — push notifications deferred to v2
+#    minio        — no file uploads in MVP
+#    redis        — Strapi 5 doesn't require it at this scale
+# ============================================================
+
+networks:
+  app:
+    driver: bridge
+
+services:
+
+  # ----------------------------------------------------------
+  # Caddy — HTTPS termination + subdomain routing
+  # ----------------------------------------------------------
+  caddy:
+    image: caddy:2-alpine
+    container_name: elbfahrt-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [app]
+    depends_on:
+      - frontend
+      - strapi
+
+  # ----------------------------------------------------------
+  # Frontend — Next.js 15 (App Router, PWA-ready)
+  # ----------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Inlined into the browser bundle at build time (see frontend/Dockerfile).
+        NEXT_PUBLIC_STRAPI_URL: https://api.elb-fahrt.de
+    container_name: elbfahrt-frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      # Server-side only: the /api/geo/* proxy reaches Nominatim/OSRM over the
+      # internal network. The browser never calls them directly.
+      - NOMINATIM_URL=http://nominatim:8080
+      - OSRM_URL=http://osrm:5000
+      - NEXTAUTH_URL=https://elb-fahrt.de
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks: [app]
+    depends_on:
+      - strapi
+
+  # ----------------------------------------------------------
+  # Strapi 5 — API + admin panel + users-permissions
+  # ----------------------------------------------------------
+  strapi:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: elbfahrt-strapi
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=1337
+      - DATABASE_CLIENT=postgres
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=elbfahrt
+      - DATABASE_USERNAME=elbfahrt
+      - DATABASE_PASSWORD=${DB_PASSWORD}
+      - DATABASE_SSL=false
+      - APP_KEYS=${STRAPI_APP_KEYS}
+      - API_TOKEN_SALT=${STRAPI_API_TOKEN_SALT}
+      - ADMIN_JWT_SECRET=${STRAPI_ADMIN_JWT_SECRET}
+      - JWT_SECRET=${STRAPI_JWT_SECRET}
+      - TRANSFER_TOKEN_SALT=${STRAPI_TRANSFER_TOKEN_SALT}
+      # Public URL for absolute links (email-confirmation). Empty in dev →
+      # Strapi builds http://localhost:1337; set PUBLIC_URL in prod .env.
+      - PUBLIC_URL=${PUBLIC_URL}
+      # SMTP. Defaults target the dev Mailpit catcher; set the real provider in
+      # prod .env (see .env.example / PLAN Appendix E).
+      - SMTP_HOST=${SMTP_HOST:-mailpit}
+      - SMTP_PORT=${SMTP_PORT:-1025}
+      - SMTP_SECURE=${SMTP_SECURE:-false}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM:-no-reply@elb-fahrt.de}
+    ports:
+      - "127.0.0.1:1337:1337"
+    networks: [app]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ----------------------------------------------------------
+  # PostgreSQL — single database for Strapi
+  # ----------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: elbfahrt-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=elbfahrt
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=elbfahrt
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks: [app]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U elbfahrt"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------
+  # Nominatim — geocoding for ~100 km around 21423 Winsen (Luhe)
+  # Uses pre-clipped extract in ./osrm-data (see scripts/prepare-osm-data.sh)
+  # ----------------------------------------------------------
+  nominatim:
+    image: mediagis/nominatim:4.3
+    container_name: elbfahrt-nominatim
+    restart: unless-stopped
+    environment:
+      - PBF_PATH=/osm/elbfahrt-region.osm.pbf
+      - NOMINATIM_PASSWORD=${DB_PASSWORD}
+      - FREEZE=true
+    volumes:
+      - nominatim_data:/var/lib/postgresql/14/main
+      - ./osrm-data:/osm:ro
+    networks: [app]
+
+  # ----------------------------------------------------------
+  # OSRM — routing on the same regional extract
+  # ----------------------------------------------------------
+  osrm:
+    image: osrm/osrm-backend:latest
+    container_name: elbfahrt-osrm
+    restart: unless-stopped
+    volumes:
+      - ./osrm-data:/data
+    command: osrm-routed --algorithm mld /data/elbfahrt-region.osrm --max-table-size 10000
+    networks: [app]
+
+volumes:
+  pg_data:
+  nominatim_data:
+  caddy_data:
+  caddy_config:

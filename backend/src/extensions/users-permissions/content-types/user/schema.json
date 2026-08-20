@@ -1,0 +1,113 @@
+{
+  "kind": "collectionType",
+  "collectionName": "up_users",
+  "info": {
+    "name": "user",
+    "description": "",
+    "singularName": "user",
+    "pluralName": "users",
+    "displayName": "User"
+  },
+  "options": {
+    "draftAndPublish": false,
+    "timestamps": true
+  },
+  "attributes": {
+    "username": {
+      "type": "string",
+      "minLength": 3,
+      "unique": true,
+      "configurable": false,
+      "required": true
+    },
+    "email": {
+      "type": "email",
+      "minLength": 6,
+      "configurable": false,
+      "required": true
+    },
+    "provider": { "type": "string", "configurable": false },
+    "password": {
+      "type": "password",
+      "minLength": 6,
+      "configurable": false,
+      "private": true,
+      "searchable": false
+    },
+    "resetPasswordToken": {
+      "type": "string",
+      "configurable": false,
+      "private": true,
+      "searchable": false
+    },
+    "confirmationToken": {
+      "type": "string",
+      "configurable": false,
+      "private": true,
+      "searchable": false
+    },
+    "confirmed": { "type": "boolean", "default": false, "configurable": false },
+    "blocked": { "type": "boolean", "default": false, "configurable": false },
+    "role": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.role",
+      "inversedBy": "users",
+      "configurable": false
+    },
+
+    "first_name": { "type": "string", "required": true, "maxLength": 100 },
+    "last_name": { "type": "string", "required": true, "maxLength": 100 },
+    "date_of_birth": { "type": "date", "required": true },
+    "mobile": { "type": "string", "required": true, "maxLength": 30 },
+
+    "postal_code": { "type": "string", "required": true, "maxLength": 10 },
+    "city": { "type": "string", "required": true, "maxLength": 100 },
+    "street": { "type": "string", "required": true, "maxLength": 200 },
+    "house_number": { "type": "string", "required": true, "maxLength": 20 },
+
+    "gender": {
+      "type": "enumeration",
+      "enum": ["m", "w", "non_binaer"]
+    },
+
+    "parent_first_name": { "type": "string", "maxLength": 100 },
+    "parent_last_name": { "type": "string", "maxLength": 100 },
+    "parent_mobile": { "type": "string", "maxLength": 30 },
+
+    "roles": { "type": "json" },
+
+    "driver_status": {
+      "type": "enumeration",
+      "enum": ["pending_review", "approved", "rejected"]
+    },
+    "driver_id_type": {
+      "type": "enumeration",
+      "enum": ["personalausweis", "fuehrerschein"]
+    },
+    "driver_verified_at": { "type": "datetime" },
+
+    "is_smoker": { "type": "boolean", "default": false },
+    "travels_with_pets": { "type": "boolean", "default": false },
+    "prefer_same_gender": { "type": "boolean", "default": false },
+
+    "rides_offered": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::ride.ride",
+      "mappedBy": "driver"
+    },
+    "ride_requests": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::ride-request.ride-request",
+      "mappedBy": "passenger"
+    },
+    "bookings": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::booking.booking",
+      "mappedBy": "passenger"
+    }
+  }
+}
