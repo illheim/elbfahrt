@@ -50,6 +50,19 @@ These files are excluded from git because of their size and are generated from a
 pmtiles extract <planet-source-url> frontend/public/region.pmtiles --bbox=...
 ```
 
+### Self‑hosted map assets
+
+The map is fully self‑hosted — it makes **no third‑party requests** at runtime. Three pieces are served from the frontend's own origin:
+
+- **Tiles** — `frontend/public/region.pmtiles` (git‑ignored due to size; generated with the `pmtiles` CLI above and placed on the server out‑of‑band).
+- **Glyphs + sprite** — the label fonts and icons, in `frontend/public/basemaps-assets/`. Unlike the tiles these are small and **committed to the repo**, so the server build picks them up automatically. Populate them once with:
+
+  ```bash
+  ./scripts/fetch-basemap-assets.sh
+  ```
+
+  This mirrors exactly the font stacks the Protomaps *light* flavor requests (Noto Sans Regular / Medium / Italic) plus the sprite. Re‑run it only if the map style's font stacks change. The asset URLs live in `frontend/lib/map/basemap.ts`.
+
 ### Local development
 
 The **frontend runs on the host** (native `next dev` for reliable hot‑reload); **everything else runs in Docker**. The `docker-compose.override.yml` supplies dev‑only settings (Mailpit mail catcher, host‑exposed geo ports, polling).

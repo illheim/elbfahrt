@@ -59,7 +59,7 @@ export default function SignInPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-4">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-start gap-6 p-4 md:justify-center">
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold">Anmelden</h1>
         <p className="text-sm text-neutral-600">

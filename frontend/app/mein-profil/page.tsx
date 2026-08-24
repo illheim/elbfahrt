@@ -104,7 +104,7 @@ function ProfileForm({ user }: { user: User }) {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-4">
       <Link href="/" className="text-sm text-accent-700 underline">
         ← Zur Übersicht
       </Link>

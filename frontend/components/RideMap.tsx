@@ -6,8 +6,9 @@
  * calls onSelect(documentId).
  *
  * Tiles come from /region.pmtiles (served statically from public/; generate it
- * with the pmtiles CLI — see README/DEV notes). Glyphs + sprites load from the
- * Protomaps assets host for now; self-host them from public/ for production.
+ * with the pmtiles CLI — see README/DEV notes). Glyphs + sprites are likewise
+ * self-hosted from public/basemaps-assets/ (scripts/fetch-basemap-assets.sh),
+ * so the map makes no third-party requests.
  *
  * Loaded via next/dynamic with ssr:false so MapLibre only runs in the browser.
  */

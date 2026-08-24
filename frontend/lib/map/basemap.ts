@@ -1,10 +1,15 @@
 /**
- * Shared MapLibre basemap config — self-hosted PMTiles + Protomaps light flavor.
- * Used by both the overview RideMap and the composer TripMap so the tile source,
- * glyphs, and sprite URLs live in one place.
+ * Shared MapLibre basemap config — everything self-hosted, no third-party
+ * calls. Used by both the overview RideMap and the composer TripMap so the tile
+ * source, glyphs, and sprite URLs live in one place.
  *
- * NOTE: glyphs + sprites still load from the Protomaps assets host; self-host
- * them from public/ before launch (see DEPLOY Part H).
+ * All three assets are served same-origin from public/:
+ *   - tiles:   /region.pmtiles          (pmtiles CLI — see README)
+ *   - glyphs:  /basemaps-assets/fonts/*  } populate with
+ *   - sprite:  /basemaps-assets/sprites/*} scripts/fetch-basemap-assets.sh
+ *
+ * The font stacks the light flavor requests are "Noto Sans Regular / Medium /
+ * Italic"; the fetch script mirrors exactly those.
  */
 
 import type { StyleSpecification } from 'maplibre-gl';
@@ -19,9 +24,8 @@ export const REGION_ZOOM = 10;
 export function buildBaseStyle(): StyleSpecification {
   return {
     version: 8,
-    glyphs:
-      'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
-    sprite: 'https://protomaps.github.io/basemaps-assets/sprites/v4/light',
+    glyphs: '/basemaps-assets/fonts/{fontstack}/{range}.pbf',
+    sprite: '/basemaps-assets/sprites/v4/light',
     sources: {
       protomaps: {
         type: 'vector',

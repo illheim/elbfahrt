@@ -56,7 +56,7 @@ export default function RolePickerPage() {
   if (isLoading || !user) return null;
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-4">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-start gap-6 p-4 md:justify-center">
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold">
           Hallo {user.first_name || user.username}!

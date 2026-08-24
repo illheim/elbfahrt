@@ -45,7 +45,7 @@ export default function VerifyEmailPage() {
   }, [isLoading, isAuthenticated, user, router]);
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 p-4">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-start gap-4 p-4 md:justify-center">
       <h1 className="text-2xl font-semibold">E-Mail bestätigt</h1>
       <p>
         Vielen Dank — Ihre E-Mail-Adresse ist jetzt bestätigt.
