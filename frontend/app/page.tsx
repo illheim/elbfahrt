@@ -215,6 +215,7 @@ export default function OverviewPage() {
           filtered={filteredRides}
           error={ridesError}
           view={effectiveView}
+          filtersActive={filtersActive}
           onSelect={goToRide}
         />
       ) : (
@@ -224,6 +225,7 @@ export default function OverviewPage() {
           error={requestsError}
           canSeeContact={isApprovedDriver}
           view={effectiveView}
+          filtersActive={filtersActive}
         />
       )}
     </main>
@@ -235,12 +237,14 @@ function RidesPanel({
   filtered,
   error,
   view,
+  filtersActive,
   onSelect,
 }: {
   rides: RideListItem[] | null;
   filtered: RideListItem[];
   error: string | null;
   view: 'list' | 'map';
+  filtersActive: boolean;
   onSelect: (documentId: string) => void;
 }) {
   if (error) return <Alert>{error}</Alert>;
@@ -251,9 +255,9 @@ function RidesPanel({
   if (filtered.length === 0) {
     return (
       <Loading>
-        {rides.length === 0
-          ? 'Aktuell sind keine Angebote eingetragen.'
-          : 'Keine Angebote passen zu den Filtern.'}
+        {filtersActive
+          ? 'Keine Angebote passen zu den Filtern.'
+          : 'Aktuell sind keine Angebote eingetragen.'}
       </Loading>
     );
   }
@@ -274,12 +278,14 @@ function RequestsPanel({
   error,
   canSeeContact,
   view,
+  filtersActive,
 }: {
   requests: RideRequestListItem[] | null;
   filtered: RideRequestListItem[];
   error: string | null;
   canSeeContact: boolean;
   view: 'list' | 'map';
+  filtersActive: boolean;
 }) {
   if (error) return <Alert>{error}</Alert>;
   if (requests === null) return <Loading>Gesuche werden geladen…</Loading>;
@@ -291,9 +297,9 @@ function RequestsPanel({
   if (filtered.length === 0) {
     return (
       <Loading>
-        {requests.length === 0
-          ? 'Aktuell sind keine Gesuche eingetragen.'
-          : 'Keine Gesuche passen zu den Filtern.'}
+        {filtersActive
+          ? 'Keine Gesuche passen zu den Filtern.'
+          : 'Aktuell sind keine Gesuche eingetragen.'}
       </Loading>
     );
   }

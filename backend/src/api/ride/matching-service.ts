@@ -112,9 +112,12 @@ export async function runMatchingForRide(
 
   const ride = await strapi.db.query('api::ride.ride').findOne({
     where: { id: rideId },
-    populate: { driver: { select: ['id'] } },
+    populate: { driver: { select: ['id'] }, waypoints: true },
   });
-  if (!ride || ride.status !== 'active') return;
+  if (!ride || ride.status !== 'active') {
+    strapi.log.info(`[matching] ride ${rideId}: not active, skipping.`);
+    return;
+  }
 
   const seatsConfirmed = await strapi.db.query('api::booking.booking').count({
     where: { ride: ride.id, status: 'confirmed' },
@@ -127,12 +130,18 @@ export async function runMatchingForRide(
   });
 
   const frontendUrl = process.env.FRONTEND_URL ?? 'https://elb-fahrt.de';
+  let matched = 0;
   let sent = 0;
 
   for (const g of gesuche) {
     try {
       if (!g.passenger?.email) continue;
-      if (!matchRideToRequest(matchRide, toMatchGesuch(g)).match) continue;
+      const result = matchRideToRequest(matchRide, toMatchGesuch(g));
+      if (!result.match) {
+        strapi.log.debug(`[matching] ride ${rideId} × gesuch ${g.id}: ${result.reason}`);
+        continue;
+      }
+      matched++;
 
       const already = await strapi.db
         .query('api::match-notification.match-notification')
@@ -154,7 +163,8 @@ export async function runMatchingForRide(
     }
   }
 
-  if (sent > 0) {
-    strapi.log.info(`[matching] ride ${rideId}: notified ${sent} rider(s).`);
-  }
+  strapi.log.info(
+    `[matching] ride ${rideId}: scanned ${gesuche.length} active Gesuch(e), ` +
+      `${matched} matched, ${sent} emailed.`
+  );
 }
