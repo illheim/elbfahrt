@@ -89,6 +89,8 @@ export function RoutePreview({
 
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
+    let originMarker: maplibregl.Marker | null = null;
+    let destMarker: maplibregl.Marker | null = null;
     seq.forEach((p, i) => {
       const isOrigin = i === 0;
       const isDest = i === seq.length - 1;
@@ -99,9 +101,12 @@ export function RoutePreview({
         `border-radius:9999px;background:${bg};color:#fff;font:600 11px sans-serif;` +
         `border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);`;
       el.textContent = isOrigin ? 'A' : isDest ? 'B' : String(i);
-      markersRef.current.push(
-        new maplibregl.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(map)
-      );
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([p.lng, p.lat])
+        .addTo(map);
+      markersRef.current.push(marker);
+      if (isOrigin) originMarker = marker;
+      if (isDest) destMarker = marker;
     });
 
     const src = map.getSource(SRC) as maplibregl.GeoJSONSource | undefined;
@@ -119,6 +124,9 @@ export function RoutePreview({
       if (cancelled || !g) return;
       const s = map.getSource(SRC) as maplibregl.GeoJSONSource | undefined;
       s?.setData(lineFC(g));
+      // Snap the A/B markers onto the routed line's endpoints (OSRM snaps to road).
+      originMarker?.setLngLat(g[0]);
+      destMarker?.setLngLat(g[g.length - 1]);
     });
     return () => {
       cancelled = true;

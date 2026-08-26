@@ -174,8 +174,12 @@ export function RideMap({
     // Straight-line features first (instant), then upgrade to real routes.
     src.setData(buildFC(plotted, {}));
 
-    // Origin (filled, clickable) + destination (hollow ring) markers.
-    for (const p of plotted) {
+    // Origin (filled, clickable) + destination (hollow ring) markers. Track the
+    // origin/destination markers per route so they can be snapped onto the
+    // road-routed line's endpoints once the geometry resolves (OSRM snaps the
+    // route to the nearest road; the raw geocoded point can sit off it).
+    const endpoints: { o: maplibregl.Marker; d: maplibregl.Marker | null }[] = [];
+    plotted.forEach((p) => {
       const clickable = !!onSelectRef.current && !!p.documentId;
       const el = document.createElement(clickable ? 'button' : 'div');
       if (clickable) (el as HTMLButtonElement).type = 'button';
@@ -185,19 +189,21 @@ export function RideMap({
         'border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);' +
         (clickable ? 'cursor:pointer;' : '');
       if (clickable) el.addEventListener('click', () => onSelectRef.current!(p.documentId!));
-      markersRef.current.push(
-        new maplibregl.Marker({ element: el }).setLngLat(p.origin).addTo(map)
-      );
+      const oMarker = new maplibregl.Marker({ element: el }).setLngLat(p.origin).addTo(map);
+      markersRef.current.push(oMarker);
+
+      let dMarker: maplibregl.Marker | null = null;
       if (p.destination) {
         const d = document.createElement('div');
         d.setAttribute('aria-hidden', 'true');
         d.style.cssText =
           `width:12px;height:12px;border-radius:9999px;background:#fff;` +
           `border:3px solid ${p.color};box-shadow:0 1px 2px rgba(0,0,0,.35);`;
-        markersRef.current.push(
-          new maplibregl.Marker({ element: d }).setLngLat(p.destination).addTo(map)
-        );
+        dMarker = new maplibregl.Marker({ element: d }).setLngLat(p.destination).addTo(map);
+        markersRef.current.push(dMarker);
       }
+      endpoints.push({ o: oMarker, d: dMarker });
+
       // Small dots for intermediate pick-up points.
       for (const wp of p.waypoints) {
         const w = document.createElement('div');
@@ -209,7 +215,7 @@ export function RideMap({
           new maplibregl.Marker({ element: w }).setLngLat(wp).addTo(map)
         );
       }
-    }
+    });
 
     // Fit to everything we're showing.
     const pts = plotted.flatMap((p) => [
@@ -242,7 +248,11 @@ export function RideMap({
       if (cancelled) return;
       const byIndex: Record<number, [number, number][]> = {};
       geoms.forEach((g, i) => {
-        if (g) byIndex[i] = g;
+        if (!g) return;
+        byIndex[i] = g;
+        // Snap the origin/destination markers onto the routed line's endpoints.
+        endpoints[i]?.o.setLngLat(g[0]);
+        endpoints[i]?.d?.setLngLat(g[g.length - 1]);
       });
       const s = map.getSource(SRC) as maplibregl.GeoJSONSource | undefined;
       s?.setData(buildFC(plotted, byIndex));

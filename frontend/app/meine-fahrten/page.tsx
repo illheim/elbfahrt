@@ -284,7 +284,8 @@ function TripCard({
  */
 function RequestCard({ request }: { request: MyRideRequest }) {
   const [open, setOpen] = useState(false);
-  const [notify, setNotify] = useState(request.notify_on_match);
+  // Legacy Gesuche have null (treated as opt-in by the matcher) — show as on.
+  const [notify, setNotify] = useState(request.notify_on_match ?? true);
   const [savingNotify, setSavingNotify] = useState(false);
   const recurring = request.recurrence && request.recurrence !== 'none';
   const when = `${fmtDay(request.departure_at)} · ${fmtTime(
@@ -323,18 +324,20 @@ function RequestCard({ request }: { request: MyRideRequest }) {
           <div className="text-xs text-neutral-400">
             Sichtbar für Fahrer:innen · wartet auf eine passende Fahrt.
           </div>
-          <label className="flex items-center gap-2 border-t border-neutral-200 pt-3 text-sm text-neutral-700">
-            <input
-              type="checkbox"
-              className="accent-neutral-900"
-              checked={notify}
-              disabled={savingNotify}
-              onChange={(e) => toggleNotify(e.target.checked)}
-            />
-            Bei passender Fahrt per E-Mail benachrichtigen
-          </label>
         </div>
       )}
+      {/* Always visible so it's reachable from the overview (and the email's
+          "deaktivieren" link) without expanding the card. */}
+      <label className="flex items-center gap-2 border-t border-neutral-200 px-4 py-3 text-sm text-neutral-700">
+        <input
+          type="checkbox"
+          className="accent-neutral-900"
+          checked={notify}
+          disabled={savingNotify}
+          onChange={(e) => toggleNotify(e.target.checked)}
+        />
+        Bei passender Fahrt per E-Mail benachrichtigen
+      </label>
     </div>
   );
 }
