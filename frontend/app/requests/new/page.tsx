@@ -44,6 +44,7 @@ export default function NewRequestPage() {
   const [until, setUntil] = useState('');
   const [seatsNeeded, setSeatsNeeded] = useState(1);
   const [notes, setNotes] = useState('');
+  const [notifyOnMatch, setNotifyOnMatch] = useState(true);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,6 +110,7 @@ export default function NewRequestPage() {
         recurrence_until: recurrence !== 'none' && until ? until : null,
         seats_needed: seatsNeeded,
         notes: notes.trim() || null,
+        notify_on_match: notifyOnMatch,
       });
       setPosted(true);
     } catch (err) {
@@ -166,7 +168,7 @@ export default function NewRequestPage() {
           label="Start"
           value={origin}
           onSelect={pickOrigin}
-          flexible={originRadiusM > 0}
+          radiusM={originRadiusM}
         />
         <RadiusSlider
           label="Wie weit vom Start darf die Mitfahrt beginnen?"
@@ -178,7 +180,7 @@ export default function NewRequestPage() {
           label="Ziel"
           value={destination}
           onSelect={pickDestination}
-          flexible={destinationRadiusM > 0}
+          radiusM={destinationRadiusM}
         />
         <RadiusSlider
           label="Wie weit vom Ziel darf die Mitfahrt enden?"
@@ -308,6 +310,19 @@ export default function NewRequestPage() {
             rows={3}
             className={inputClass}
           />
+        </label>
+
+        <label className="flex items-start gap-2 text-sm text-neutral-700">
+          <input
+            type="checkbox"
+            className="mt-0.5 accent-neutral-900"
+            checked={notifyOnMatch}
+            onChange={(e) => setNotifyOnMatch(e.target.checked)}
+          />
+          <span>
+            Benachrichtige mich per E-Mail, wenn eine passende Fahrt eingetragen
+            wird.
+          </span>
         </label>
 
         {error && (

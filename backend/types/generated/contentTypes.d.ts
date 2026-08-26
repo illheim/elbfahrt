@@ -512,6 +512,42 @@ export interface ApiDriverSettingsDriverSettings
   };
 }
 
+export interface ApiMatchNotificationMatchNotification
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'match_notifications';
+  info: {
+    description: 'Ledger of match emails sent to riders (v2.0 Stage 2) \u2014 enforces once-per-ride idempotency and provides an audit trail. Internal only.';
+    displayName: 'Match Notification';
+    pluralName: 'match-notifications';
+    singularName: 'match-notification';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    channel: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::match-notification.match-notification'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    ride: Schema.Attribute.Relation<'manyToOne', 'api::ride.ride'>;
+    ride_request: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::ride-request.ride-request'
+    >;
+    sent_at: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiRideRequestRideRequest extends Struct.CollectionTypeSchema {
   collectionName: 'ride_requests';
   info: {
@@ -535,13 +571,18 @@ export interface ApiRideRequestRideRequest extends Struct.CollectionTypeSchema {
       }>;
     destination_lat: Schema.Attribute.Decimal & Schema.Attribute.Required;
     destination_lng: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    destination_radius_m: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 10000;
+          min: 0;
+        },
+        number
+      >;
     flexible_destination: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<false>;
     flexible_origin: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<false>;
-    gender_filter: Schema.Attribute.Enumeration<['none', 'same_only']> &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'none'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -549,6 +590,8 @@ export interface ApiRideRequestRideRequest extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     notes: Schema.Attribute.Text;
+    notify_on_match: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
     origin_address: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMaxLength<{
@@ -556,6 +599,14 @@ export interface ApiRideRequestRideRequest extends Struct.CollectionTypeSchema {
       }>;
     origin_lat: Schema.Attribute.Decimal & Schema.Attribute.Required;
     origin_lng: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    origin_radius_m: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 10000;
+          min: 0;
+        },
+        number
+      >;
     passenger: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.user'
@@ -618,9 +669,6 @@ export interface ApiRideRide extends Struct.CollectionTypeSchema {
       Schema.Attribute.DefaultTo<false>;
     flexible_origin: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<false>;
-    gender_filter: Schema.Attribute.Enumeration<['none', 'same_only']> &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'none'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::ride.ride'> &
       Schema.Attribute.Private;
@@ -656,6 +704,7 @@ export interface ApiRideRide extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    waypoints: Schema.Attribute.Component<'geo.waypoint', true>;
   };
 }
 
@@ -1148,13 +1197,11 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 100;
       }>;
-    gender: Schema.Attribute.Enumeration<['m', 'w', 'non_binaer']>;
     house_number: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 20;
       }>;
-    is_smoker: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     last_name: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMaxLength<{
@@ -1193,8 +1240,6 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 10;
       }>;
-    prefer_same_gender: Schema.Attribute.Boolean &
-      Schema.Attribute.DefaultTo<false>;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     resetPasswordToken: Schema.Attribute.String & Schema.Attribute.Private;
@@ -1213,8 +1258,6 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 200;
       }>;
-    travels_with_pets: Schema.Attribute.Boolean &
-      Schema.Attribute.DefaultTo<false>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1240,6 +1283,7 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::booking.booking': ApiBookingBooking;
       'api::driver-settings.driver-settings': ApiDriverSettingsDriverSettings;
+      'api::match-notification.match-notification': ApiMatchNotificationMatchNotification;
       'api::ride-request.ride-request': ApiRideRequestRideRequest;
       'api::ride.ride': ApiRideRide;
       'plugin::content-releases.release': PluginContentReleasesRelease;

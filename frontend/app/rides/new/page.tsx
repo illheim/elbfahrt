@@ -13,8 +13,9 @@
  * lib/api/rides.ts CreateRideInput.
  */
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/lib/auth/useRequireAuth';
 import { ApiError } from '@/lib/api/client';
@@ -23,6 +24,11 @@ import { createRide } from '@/lib/api/rides';
 import { AddressField } from '@/components/AddressField';
 import { toDateTimeLocalValue } from '@/lib/datetime';
 import type { Recurrence } from '@/lib/api/types';
+
+const RoutePreview = dynamic(
+  () => import('@/components/RoutePreview').then((m) => m.RoutePreview),
+  { ssr: false }
+);
 
 const WEEKDAYS: { n: number; label: string }[] = [
   { n: 1, label: 'Mo' },
@@ -40,6 +46,11 @@ export default function NewRidePage() {
 
   const [origin, setOrigin] = useState<GeoResult | null>(null);
   const [destination, setDestination] = useState<GeoResult | null>(null);
+  // Stable ids so reordering/removing keeps each AddressField's own text state.
+  const nextWpId = useRef(0);
+  const [waypoints, setWaypoints] = useState<
+    { id: number; value: GeoResult | null }[]
+  >([]);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
 
   const [flexibleOrigin, setFlexibleOrigin] = useState(false);
@@ -57,16 +68,27 @@ export default function NewRidePage() {
   const [nowMs] = useState(() => Date.now());
   const minDateTime = toDateTimeLocalValue(new Date(nowMs));
 
-  // OSRM preview once both ends are set. setState only in the async callback,
-  // never synchronously in the effect body.
+  // The filled (resolved) waypoints in travel order.
+  const filledWaypoints = useMemo(
+    () =>
+      waypoints
+        .map((w) => w.value)
+        .filter((v): v is GeoResult => !!v),
+    [waypoints]
+  );
+
+  // OSRM preview once both ends are set — routed through any waypoints. setState
+  // only in the async callback, never synchronously in the effect body.
   useEffect(() => {
     if (!origin || !destination) return;
     let active = true;
-    getRoute(origin, destination).then((r) => active && setRouteInfo(r));
+    getRoute(origin, destination, filledWaypoints).then(
+      (r) => active && setRouteInfo(r)
+    );
     return () => {
       active = false;
     };
-  }, [origin, destination]);
+  }, [origin, destination, filledWaypoints]);
 
   const pickOrigin = (r: GeoResult | null) => {
     setOrigin(r);
@@ -76,6 +98,22 @@ export default function NewRidePage() {
     setDestination(r);
     setRouteInfo(null);
   };
+
+  const addWaypoint = () =>
+    setWaypoints((w) => [...w, { id: nextWpId.current++, value: null }]);
+  const setWaypointAt = (id: number, r: GeoResult | null) =>
+    setWaypoints((w) => w.map((x) => (x.id === id ? { ...x, value: r } : x)));
+  const removeWaypoint = (id: number) =>
+    setWaypoints((w) => w.filter((x) => x.id !== id));
+  const moveWaypoint = (id: number, dir: -1 | 1) =>
+    setWaypoints((w) => {
+      const i = w.findIndex((x) => x.id === id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= w.length) return w;
+      const next = [...w];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
 
   const toggleWeekday = (n: number) =>
     setWeekdays((cur) =>
@@ -106,6 +144,11 @@ export default function NewRidePage() {
         origin_lng: origin.lng,
         destination_lat: destination.lat,
         destination_lng: destination.lng,
+        waypoints: filledWaypoints.map((w) => ({
+          address: w.label,
+          lat: w.lat,
+          lng: w.lng,
+        })),
         flexible_origin: flexibleOrigin,
         flexible_destination: flexibleDestination,
         departure_at: new Date(departure).toISOString(),
@@ -199,6 +242,63 @@ export default function NewRidePage() {
           Ziel ist flexibel (±1 km)
         </label>
 
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-medium text-neutral-800">
+            Zwischenstopps <span className="text-neutral-400">(optional)</span>
+          </span>
+          <p className="text-xs text-neutral-500">
+            Orte entlang der Strecke, an denen Sie zusteigen lassen – in
+            Reihenfolge der Fahrt.
+          </p>
+          {waypoints.map((w, i) => (
+            <div
+              key={w.id}
+              className="flex flex-col gap-1 rounded-md border border-neutral-200 p-2"
+            >
+              <div className="flex items-center justify-end gap-1">
+                <button
+                  type="button"
+                  onClick={() => moveWaypoint(w.id, -1)}
+                  disabled={i === 0}
+                  aria-label="Stopp nach oben"
+                  className="rounded p-1 text-neutral-500 transition hover:text-neutral-900 disabled:opacity-30"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveWaypoint(w.id, 1)}
+                  disabled={i === waypoints.length - 1}
+                  aria-label="Stopp nach unten"
+                  className="rounded p-1 text-neutral-500 transition hover:text-neutral-900 disabled:opacity-30"
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeWaypoint(w.id)}
+                  aria-label="Stopp entfernen"
+                  className="rounded p-1 text-red-600 transition hover:text-red-800"
+                >
+                  ✕
+                </button>
+              </div>
+              <AddressField
+                label={`Stopp ${i + 1}`}
+                value={w.value}
+                onSelect={(r) => setWaypointAt(w.id, r)}
+              />
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addWaypoint}
+            className="self-start rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
+          >
+            + Zwischenstopp hinzufügen
+          </button>
+        </div>
+
         {origin && destination && (
           <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700">
             {routeInfo
@@ -207,6 +307,14 @@ export default function NewRidePage() {
                 )}`
               : 'Strecke wird berechnet…'}
           </div>
+        )}
+
+        {origin && destination && (
+          <RoutePreview
+            origin={{ lat: origin.lat, lng: origin.lng }}
+            destination={{ lat: destination.lat, lng: destination.lng }}
+            waypoints={filledWaypoints.map((w) => ({ lat: w.lat, lng: w.lng }))}
+          />
         )}
 
         <div className="grid grid-cols-2 gap-3">

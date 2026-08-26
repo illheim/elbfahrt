@@ -24,6 +24,7 @@ export interface CreateRideRequestInput {
   flexible_destination: boolean;
   origin_radius_m?: number;
   destination_radius_m?: number;
+  notify_on_match?: boolean;
   departure_at: string; // ISO
   return_at?: string | null;
   recurrence: Recurrence;
@@ -41,6 +42,20 @@ export async function createRideRequest(
     body: { data: input },
   });
   return res.data;
+}
+
+/**
+ * Toggle match-notifications on the caller's own Gesuch. The controller's
+ * ownership guard rejects edits to anyone else's request.
+ */
+export async function setRequestNotify(
+  documentId: string,
+  notify_on_match: boolean
+): Promise<void> {
+  await api(`/api/ride-requests/${documentId}`, {
+    method: 'PUT',
+    body: { data: { notify_on_match } },
+  });
 }
 
 /**

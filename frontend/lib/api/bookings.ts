@@ -78,6 +78,7 @@ export interface MyRideRequest {
   destination_address: string;
   departure_at: string;
   recurrence: Recurrence;
+  notify_on_match: boolean;
 }
 
 /** A ride the caller offers, shown greyed in the driver tab. */

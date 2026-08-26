@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "match_notifications",
+  "info": {
+    "singularName": "match-notification",
+    "pluralName": "match-notifications",
+    "displayName": "Match Notification",
+    "description": "Ledger of match emails sent to riders (v2.0 Stage 2) — enforces once-per-ride idempotency and provides an audit trail. Internal only."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "ride": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::ride.ride"
+    },
+    "ride_request": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::ride-request.ride-request"
+    },
+    "sent_at": { "type": "datetime" },
+    "channel": { "type": "string" }
+  }
+}

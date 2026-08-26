@@ -32,6 +32,7 @@ const { ForbiddenError, NotFoundError, UnauthorizedError } = errors;
 // is set, but the client needs it to tell "this is my own ride".
 const READ_POPULATE = {
   driver: { fields: ['id', ...SAFE_USER_FIELDS] },
+  waypoints: true,
 } as const;
 
 /**

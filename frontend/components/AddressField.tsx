@@ -24,13 +24,22 @@ export function AddressField({
   value,
   onSelect,
   flexible = false,
+  radiusM,
 }: {
   label: string;
   value: GeoResult | null;
   onSelect: (r: GeoResult | null) => void;
-  /** When true, the picker map shows a ±1 km area around the point. */
+  /** When true, the picker map shows a fixed ±1 km area around the point. */
   flexible?: boolean;
+  /**
+   * Flexibility radius in metres. When given it drives the picker ring (and
+   * overrides `flexible`), so the circle matches a radius slider live. Omit to
+   * fall back to the ±1 km boolean.
+   */
+  radiusM?: number | null;
 }) {
+  const ringActive = radiusM != null ? radiusM > 0 : flexible;
+  const ringKm = radiusM != null ? radiusM / 1000 : 1;
   const [query, setQuery] = useState(value?.label ?? '');
   const [results, setResults] = useState<GeoResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -170,7 +179,8 @@ export function AddressField({
         <LocationPicker
           marker={value ? [value.lng, value.lat] : null}
           onPick={handleMapPick}
-          flexible={flexible}
+          flexible={ringActive}
+          radiusKm={ringKm}
         />
       )}
     </div>

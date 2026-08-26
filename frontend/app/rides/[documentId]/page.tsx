@@ -110,6 +110,14 @@ export default function RideDetailPage() {
       <section className="flex flex-col gap-3 rounded-md border border-neutral-300 bg-white p-4">
         <div className="flex flex-col text-base font-medium text-neutral-900">
           <span>{ride.origin_address}</span>
+          {ride.waypoints?.map((w, i) => (
+            <span key={i} className="flex flex-col">
+              <span className="text-neutral-400">↓</span>
+              <span className="text-sm font-normal text-neutral-600">
+                {w.address}
+              </span>
+            </span>
+          ))}
           <span className="text-neutral-400">↓</span>
           <span>{ride.destination_address}</span>
         </div>

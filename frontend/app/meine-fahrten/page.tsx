@@ -22,6 +22,7 @@ import {
   type Contact,
 } from '@/lib/api/bookings';
 import { cancelRide } from '@/lib/api/rides';
+import { setRequestNotify } from '@/lib/api/requests';
 import { CardSummary } from '@/components/CardSummary';
 import type { BookingStatus } from '@/lib/api/types';
 
@@ -283,10 +284,24 @@ function TripCard({
  */
 function RequestCard({ request }: { request: MyRideRequest }) {
   const [open, setOpen] = useState(false);
+  const [notify, setNotify] = useState(request.notify_on_match);
+  const [savingNotify, setSavingNotify] = useState(false);
   const recurring = request.recurrence && request.recurrence !== 'none';
   const when = `${fmtDay(request.departure_at)} · ${fmtTime(
     request.departure_at
   )} Uhr${recurring ? ' · regelmäßig' : ''}`;
+
+  async function toggleNotify(next: boolean) {
+    setNotify(next);
+    setSavingNotify(true);
+    try {
+      await setRequestNotify(request.documentId, next);
+    } catch {
+      setNotify(!next); // revert on failure
+    } finally {
+      setSavingNotify(false);
+    }
+  }
 
   return (
     <div className="overflow-hidden rounded-md border border-neutral-200 bg-neutral-50">
@@ -308,6 +323,16 @@ function RequestCard({ request }: { request: MyRideRequest }) {
           <div className="text-xs text-neutral-400">
             Sichtbar für Fahrer:innen · wartet auf eine passende Fahrt.
           </div>
+          <label className="flex items-center gap-2 border-t border-neutral-200 pt-3 text-sm text-neutral-700">
+            <input
+              type="checkbox"
+              className="accent-neutral-900"
+              checked={notify}
+              disabled={savingNotify}
+              onChange={(e) => toggleNotify(e.target.checked)}
+            />
+            Bei passender Fahrt per E-Mail benachrichtigen
+          </label>
         </div>
       )}
     </div>

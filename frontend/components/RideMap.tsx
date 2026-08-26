@@ -31,6 +31,7 @@ export interface MapPoint {
   origin_lng?: number | string | null;
   destination_lat?: number | string | null;
   destination_lng?: number | string | null;
+  waypoints?: { lat: number | string; lng: number | string }[] | null;
   origin_address: string;
   destination_address: string;
 }
@@ -53,6 +54,7 @@ interface Plotted {
   color: string;
   origin: [number, number];
   destination: [number, number] | null;
+  waypoints: [number, number][];
   label: string;
 }
 
@@ -87,11 +89,18 @@ export function RideMap({
       if (olng === null || olat === null) return;
       const dlng = num(it.destination_lng);
       const dlat = num(it.destination_lat);
+      const wps: [number, number][] = [];
+      for (const w of it.waypoints ?? []) {
+        const wlng = num(w.lng);
+        const wlat = num(w.lat);
+        if (wlng !== null && wlat !== null) wps.push([wlng, wlat]);
+      }
       out.push({
         documentId: it.documentId,
         color: PALETTE[i % PALETTE.length],
         origin: [olng, olat],
         destination: dlng !== null && dlat !== null ? [dlng, dlat] : null,
+        waypoints: wps,
         label: `${it.origin_address} → ${it.destination_address}`,
       });
     });
@@ -189,12 +198,25 @@ export function RideMap({
           new maplibregl.Marker({ element: d }).setLngLat(p.destination).addTo(map)
         );
       }
+      // Small dots for intermediate pick-up points.
+      for (const wp of p.waypoints) {
+        const w = document.createElement('div');
+        w.setAttribute('aria-hidden', 'true');
+        w.style.cssText =
+          `width:9px;height:9px;border-radius:9999px;background:${p.color};` +
+          `border:2px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.3);`;
+        markersRef.current.push(
+          new maplibregl.Marker({ element: w }).setLngLat(wp).addTo(map)
+        );
+      }
     }
 
     // Fit to everything we're showing.
-    const pts = plotted.flatMap((p) =>
-      p.destination ? [p.origin, p.destination] : [p.origin]
-    );
+    const pts = plotted.flatMap((p) => [
+      p.origin,
+      ...p.waypoints,
+      ...(p.destination ? [p.destination] : []),
+    ]);
     if (pts.length === 1) {
       map.easeTo({ center: pts[0], zoom: 12, duration: 400 });
     } else if (pts.length > 1) {
@@ -211,7 +233,8 @@ export function RideMap({
           p.destination
             ? getRouteGeometry(
                 { lng: p.origin[0], lat: p.origin[1] },
-                { lng: p.destination[0], lat: p.destination[1] }
+                { lng: p.destination[0], lat: p.destination[1] },
+                p.waypoints.map(([lng, lat]) => ({ lng, lat }))
               )
             : Promise.resolve(null)
         )
@@ -270,7 +293,7 @@ function buildFC(
   const features: GeoJSON.Feature[] = [];
   plotted.forEach((p, i) => {
     if (!p.destination) return;
-    const coords = geoms[i] ?? [p.origin, p.destination];
+    const coords = geoms[i] ?? [p.origin, ...p.waypoints, p.destination];
     features.push({
       type: 'Feature',
       geometry: { type: 'LineString', coordinates: coords },

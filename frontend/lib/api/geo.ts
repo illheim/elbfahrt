@@ -45,15 +45,30 @@ export async function reverseGeocode(
   }
 }
 
-/** Driving distance/time between two points, or null if unavailable. */
+interface LngLat {
+  lat: number;
+  lng: number;
+}
+
+/** Build the directions query, routing through optional ordered waypoints. */
+function directionsQuery(from: LngLat, to: LngLat, via?: LngLat[]): string {
+  if (via && via.length > 0) {
+    const coords = [from, ...via, to]
+      .map((p) => `${p.lng},${p.lat}`)
+      .join(';');
+    return `coords=${coords}`;
+  }
+  return `from=${from.lng},${from.lat}&to=${to.lng},${to.lat}`;
+}
+
+/** Driving distance/time from origin to destination (through `via`), or null. */
 export async function getRoute(
-  from: { lat: number; lng: number },
-  to: { lat: number; lng: number }
+  from: LngLat,
+  to: LngLat,
+  via?: LngLat[]
 ): Promise<RouteInfo | null> {
   try {
-    const res = await fetch(
-      `/api/geo/directions?from=${from.lng},${from.lat}&to=${to.lng},${to.lat}`
-    );
+    const res = await fetch(`/api/geo/directions?${directionsQuery(from, to, via)}`);
     if (!res.ok) return null;
     return (await res.json()) as RouteInfo;
   } catch {
@@ -62,17 +77,18 @@ export async function getRoute(
 }
 
 /**
- * Driving-route line for drawing on the map: an array of [lng, lat] coordinates,
- * or null if the route can't be fetched. Callers should fall back to a straight
- * line between the two points.
+ * Driving-route line for drawing on the map: an array of [lng, lat] coordinates
+ * through optional ordered waypoints, or null if the route can't be fetched.
+ * Callers should fall back to straight segments between the points.
  */
 export async function getRouteGeometry(
-  from: { lat: number; lng: number },
-  to: { lat: number; lng: number }
+  from: LngLat,
+  to: LngLat,
+  via?: LngLat[]
 ): Promise<[number, number][] | null> {
   try {
     const res = await fetch(
-      `/api/geo/directions?from=${from.lng},${from.lat}&to=${to.lng},${to.lat}&geometry=1`
+      `/api/geo/directions?${directionsQuery(from, to, via)}&geometry=1`
     );
     if (!res.ok) return null;
     const d = (await res.json()) as { geometry?: [number, number][] | null };

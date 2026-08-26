@@ -27,6 +27,7 @@
     "flexible_destination": { "type": "boolean", "default": false },
     "origin_radius_m": { "type": "integer", "min": 0, "max": 10000 },
     "destination_radius_m": { "type": "integer", "min": 0, "max": 10000 },
+    "notify_on_match": { "type": "boolean", "default": true },
     "departure_at": { "type": "datetime", "required": true },
     "return_at": { "type": "datetime" },
     "recurrence": {

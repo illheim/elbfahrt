@@ -59,6 +59,7 @@ export interface CreateRideInput {
   origin_lng: number;
   destination_lat: number;
   destination_lng: number;
+  waypoints?: { address: string; lat: number; lng: number }[];
   flexible_origin: boolean;
   flexible_destination: boolean;
   departure_at: string; // ISO

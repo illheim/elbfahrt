@@ -8,6 +8,12 @@
  * /api/auth/local skip the wrapper entirely.
  */
 
+export interface Waypoint {
+  address: string;
+  lat: number;
+  lng: number;
+}
+
 export type UserRole = 'driver' | 'passenger';
 
 export type DriverStatus = 'pending_review' | 'approved' | 'rejected';
@@ -70,6 +76,9 @@ export interface Ride {
   destination_lat: number;
   destination_lng: number;
 
+  // Ordered pick-up points between origin and destination (v2.0 Stage 1b).
+  waypoints: Waypoint[];
+
   flexible_origin: boolean;
   flexible_destination: boolean;
 
@@ -110,6 +119,8 @@ export interface RideRequest {
   // derive `radius ?? (flexible ? 1000 : 0)`.
   origin_radius_m: number | null;
   destination_radius_m: number | null;
+  // Email me when a new Angebot matches this Gesuch (v2.0 Stage 2).
+  notify_on_match: boolean;
 
   departure_at: string;
   return_at: string | null;
