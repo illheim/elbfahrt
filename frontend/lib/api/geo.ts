@@ -60,3 +60,24 @@ export async function getRoute(
     return null;
   }
 }
+
+/**
+ * Driving-route line for drawing on the map: an array of [lng, lat] coordinates,
+ * or null if the route can't be fetched. Callers should fall back to a straight
+ * line between the two points.
+ */
+export async function getRouteGeometry(
+  from: { lat: number; lng: number },
+  to: { lat: number; lng: number }
+): Promise<[number, number][] | null> {
+  try {
+    const res = await fetch(
+      `/api/geo/directions?from=${from.lng},${from.lat}&to=${to.lng},${to.lat}&geometry=1`
+    );
+    if (!res.ok) return null;
+    const d = (await res.json()) as { geometry?: [number, number][] | null };
+    return Array.isArray(d.geometry) && d.geometry.length > 1 ? d.geometry : null;
+  } catch {
+    return null;
+  }
+}
