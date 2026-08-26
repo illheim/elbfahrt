@@ -22,6 +22,8 @@ export interface CreateRideRequestInput {
   destination_lng: number;
   flexible_origin: boolean;
   flexible_destination: boolean;
+  origin_radius_m?: number;
+  destination_radius_m?: number;
   departure_at: string; // ISO
   return_at?: string | null;
   recurrence: Recurrence;

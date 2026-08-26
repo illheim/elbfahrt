@@ -531,9 +531,7 @@ function RequestCard({
                 {request.passenger.first_name}
               </span>
             )}
-            {(request.flexible_origin || request.flexible_destination) && (
-              <Badge>±1 km flexibel</Badge>
-            )}
+            {radiusLabel(request) && <Badge>{radiusLabel(request)}</Badge>}
           </div>
           {canSeeContact && <ContactReveal documentId={request.documentId ?? ''} />}
         </div>
@@ -671,6 +669,24 @@ function matchesTrip(
   }
   if (f.minSeats > 0 && seats < f.minSeats) return false;
   return true;
+}
+
+/**
+ * Flexibility badge for a Gesuch. Derives the effective radius, falling back to
+ * the legacy boolean (`radius ?? flexible ? 1000 : 0`) for pre-v2.0 rows, and
+ * returns the larger of origin/destination, or null when exact.
+ */
+function radiusLabel(r: {
+  flexible_origin: boolean;
+  flexible_destination: boolean;
+  origin_radius_m: number | null;
+  destination_radius_m: number | null;
+}): string | null {
+  const o = r.origin_radius_m ?? (r.flexible_origin ? 1000 : 0);
+  const d = r.destination_radius_m ?? (r.flexible_destination ? 1000 : 0);
+  const m = Math.max(o, d);
+  if (m <= 0) return null;
+  return `± ${(m / 1000).toFixed(1).replace('.', ',')} km flexibel`;
 }
 
 function recurrenceLabel(t: {

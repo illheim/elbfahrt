@@ -106,6 +106,10 @@ export interface RideRequest {
 
   flexible_origin: boolean;
   flexible_destination: boolean;
+  // Pickup/drop-off flexibility in metres. Nullable on legacy rows — consumers
+  // derive `radius ?? (flexible ? 1000 : 0)`.
+  origin_radius_m: number | null;
+  destination_radius_m: number | null;
 
   departure_at: string;
   return_at: string | null;

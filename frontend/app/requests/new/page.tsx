@@ -33,8 +33,10 @@ export default function NewRequestPage() {
   const [destination, setDestination] = useState<GeoResult | null>(null);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
 
-  const [flexibleOrigin, setFlexibleOrigin] = useState(false);
-  const [flexibleDestination, setFlexibleDestination] = useState(false);
+  // Pickup/drop-off flexibility as a radius in metres (0 = exact). Powers
+  // matching (v2.0 Stage 1a). Default to a small 1 km leeway.
+  const [originRadiusM, setOriginRadiusM] = useState(1000);
+  const [destinationRadiusM, setDestinationRadiusM] = useState(1000);
   const [departure, setDeparture] = useState('');
   const [ret, setRet] = useState('');
   const [recurrence, setRecurrence] = useState<Recurrence>('none');
@@ -96,8 +98,10 @@ export default function NewRequestPage() {
         origin_lng: origin.lng,
         destination_lat: destination.lat,
         destination_lng: destination.lng,
-        flexible_origin: flexibleOrigin,
-        flexible_destination: flexibleDestination,
+        flexible_origin: originRadiusM > 0,
+        flexible_destination: destinationRadiusM > 0,
+        origin_radius_m: originRadiusM,
+        destination_radius_m: destinationRadiusM,
         departure_at: new Date(departure).toISOString(),
         return_at: ret ? new Date(ret).toISOString() : null,
         recurrence,
@@ -162,31 +166,25 @@ export default function NewRequestPage() {
           label="Start"
           value={origin}
           onSelect={pickOrigin}
-          flexible={flexibleOrigin}
+          flexible={originRadiusM > 0}
         />
-        <label className="flex items-center gap-2 text-sm text-neutral-700">
-          <input
-            type="checkbox"
-            checked={flexibleOrigin}
-            onChange={(e) => setFlexibleOrigin(e.target.checked)}
-          />
-          Start ist flexibel (±1 km)
-        </label>
+        <RadiusSlider
+          label="Wie weit vom Start darf die Mitfahrt beginnen?"
+          value={originRadiusM}
+          onChange={setOriginRadiusM}
+        />
 
         <AddressField
           label="Ziel"
           value={destination}
           onSelect={pickDestination}
-          flexible={flexibleDestination}
+          flexible={destinationRadiusM > 0}
         />
-        <label className="flex items-center gap-2 text-sm text-neutral-700">
-          <input
-            type="checkbox"
-            checked={flexibleDestination}
-            onChange={(e) => setFlexibleDestination(e.target.checked)}
-          />
-          Ziel ist flexibel (±1 km)
-        </label>
+        <RadiusSlider
+          label="Wie weit vom Ziel darf die Mitfahrt enden?"
+          value={destinationRadiusM}
+          onChange={setDestinationRadiusM}
+        />
 
         {origin && destination && (
           <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700">
@@ -331,6 +329,44 @@ export default function NewRequestPage() {
       </form>
     </main>
   );
+}
+
+/** Slider for a pickup/drop-off radius in metres (0 = exact). */
+function RadiusSlider({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (m: number) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="flex items-baseline justify-between text-sm text-neutral-700">
+        <span>{label}</span>
+        <strong className="font-medium text-neutral-900">
+          {fmtRadius(value)}
+        </strong>
+      </span>
+      <input
+        type="range"
+        min={0}
+        max={10000}
+        step={500}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full accent-neutral-900"
+        aria-label={label}
+      />
+    </label>
+  );
+}
+
+/** Radius label: 0 → "genau hier", else "± X,X km". */
+function fmtRadius(m: number): string {
+  if (m <= 0) return 'genau hier';
+  return `± ${(m / 1000).toFixed(1).replace('.', ',')} km`;
 }
 
 function fmtDistance(m: number): string {
