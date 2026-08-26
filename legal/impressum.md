@@ -1,12 +1,3 @@
-<!--
-  ⚠️ ENTWURF — vor Veröffentlichung prüfen.
-  - [In eckigen Klammern] stehen Angaben, die noch ergänzt/bestätigt werden müssen.
-  - Rechtsform (e. V. / nicht eingetragener Verein) und Registerdaten bitte
-    verifizieren; davon hängt ab, ob der Abschnitt „Registereintrag" gilt.
-  - Vor dem Livegang durch den Vorstand (und idealerweise rechtlich) freigeben.
-  Diesen Kommentarblock vor der Veröffentlichung entfernen.
--->
-
 # Impressum
 
 ## Angaben gemäß § 5 DDG (Digitale-Dienste-Gesetz)
@@ -72,6 +63,12 @@ Unser Angebot enthält ggf. Links zu externen Websites Dritter, auf deren
 Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte
 auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets
 der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.
+
+## Förderung
+
+Dieses Projekt wurde im Rahmen der Dorfentwicklung ‚Untere Ilmenau‘ mit
+Fördermitteln des Landes Niedersachsen und der Europäischen Union (ELER)
+unterstützt.
 
 ## Hinweis zur Mitfahrvermittlung
 

@@ -67,6 +67,15 @@ export default function ImpressumPage() {
           </p>
         </section>
 
+        <section>
+          <h2 className="mb-1 font-semibold text-neutral-900">Förderung</h2>
+          <p>
+            Dieses Projekt wurde im Rahmen der Dorfentwicklung ‚Untere Ilmenau‘
+            mit Fördermitteln des Landes Niedersachsen und der Europäischen Union
+            (ELER) unterstützt.
+          </p>
+        </section>
+
         <p className="text-xs text-neutral-500">
           Registereintrag und weitere Pflichtangaben werden ergänzt.
         </p>

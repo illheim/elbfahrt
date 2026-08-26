@@ -1,6 +1,8 @@
 # elb-fahrt.de
 
-A self-hosted, open-source community carpooling platform (*Mitfahrnetz*) for the **Förderverein Binnenmarsch/Elbmarsch**, covering the region around Winsen (Luhe) in northern Germany. Neighbours can offer rides and post ride requests ("Gesuche"), with all geocoding, routing, and map tiles served from the project's own infrastructure — no third‑party cloud APIs and no trackers.
+*Dieses Projekt wurde im Rahmen der Dorfentwicklung ‚Untere Ilmenau‘ mit Fördermitteln des Landes Niedersachsen und der Europäischen Union (ELER) unterstützt.*
+
+A self-hosted, open-source community carpooling platform (*Mitfahrnetz*) operated by the **Förderverein Binnenmarsch/Elbmarsch**, covering the region around Winsen (Luhe) in northern Germany. Neighbours can offer rides and post ride requests ("Gesuche"), with all geocoding, routing, and map tiles served from the project's own infrastructure — no third‑party cloud APIs and no trackers.
 
 The stack is designed to run entirely on a single small server: a Next.js frontend, a Strapi API, PostgreSQL, and self‑hosted Nominatim (geocoding) and OSRM (routing), all behind Caddy via Docker Compose.
 
