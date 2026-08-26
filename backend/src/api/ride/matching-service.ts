@@ -124,8 +124,12 @@ export async function runMatchingForRide(
   });
   const matchRide = toMatchRide(ride, seatsConfirmed);
 
+  // Scan ALL active Gesuche and let the matcher decide on notifications: a
+  // legacy row created before `notify_on_match` existed has NULL (Strapi does
+  // not backfill defaults), which the matcher treats as opt-in (`?? true`).
+  // Filtering `notify_on_match: true` here would wrongly drop those NULL rows.
   const gesuche = await strapi.db.query('api::ride-request.ride-request').findMany({
-    where: { status: 'active', notify_on_match: true },
+    where: { status: 'active' },
     populate: { passenger: { select: ['id', 'email', 'first_name'] } },
   });
 
