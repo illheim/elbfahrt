@@ -63,7 +63,21 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
-/** First segment of a Nominatim display name, e.g. "An der Ilmenau, …" → "An der Ilmenau". */
+/**
+ * Short label for a Nominatim display name — the street / place name
+ * (roughly addr:street). Nominatim puts the house number first when present
+ * ("17, Bahnhofstraße, …"), which is meaningless on its own, so we skip a
+ * leading house-number segment and show the next part instead.
+ *   "17, Bahnhofstraße, …"  → "Bahnhofstraße"
+ *   "Ole Au, Drage, …"      → "Ole Au"
+ *   "Aldi, Winsen, …"       → "Aldi"
+ */
 export function shortAddr(a: string): string {
-  return a.split(',')[0].trim();
+  const parts = a
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return a.trim();
+  const isHouseNumber = /^\d+\s*[a-z]?$/i.test(parts[0]);
+  return isHouseNumber && parts.length > 1 ? parts[1] : parts[0];
 }

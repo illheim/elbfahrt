@@ -51,7 +51,6 @@ const EMPTY_FILTERS: Filters = {
   minSeats: 0,
 };
 
-const WEEKDAYS = ['', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']; // 1=Mon … 7=Sun
 
 export default function OverviewPage() {
   const { user, isLoading } = useRequireAuth();
@@ -457,7 +456,7 @@ function RideCard({ ride }: { ride: RideListItem }) {
   const [open, setOpen] = useState(false);
   const recur = recurrenceLabel(ride);
   const when = recur
-    ? `${recur} · ab ${fmtTime(ride.departure_at)} Uhr`
+    ? `${recur} · ${fmtTime(ride.departure_at)} Uhr`
     : `${fmtDay(ride.departure_at)} · ${fmtTime(ride.departure_at)} Uhr`;
 
   return (
@@ -477,6 +476,11 @@ function RideCard({ ride }: { ride: RideListItem }) {
       {open && (
         <div className="flex flex-col gap-2 border-t border-neutral-200 px-4 pb-4 pt-3">
           <Route origin={ride.origin_address} destination={ride.destination_address} />
+          {weekdayList(ride) && (
+            <div className="text-xs text-neutral-600">
+              Wochentage: {weekdayList(ride)}
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
             {ride.driver?.first_name && (
               <span className="text-neutral-600">{ride.driver.first_name}</span>
@@ -507,7 +511,7 @@ function RequestCard({
   const [open, setOpen] = useState(false);
   const recur = recurrenceLabel(request);
   const when = recur
-    ? `${recur} · ab ${fmtTime(request.departure_at)} Uhr`
+    ? `${recur} · ${fmtTime(request.departure_at)} Uhr`
     : `${fmtDay(request.departure_at)} · ${fmtTime(request.departure_at)} Uhr`;
 
   return (
@@ -531,6 +535,11 @@ function RequestCard({
             origin={request.origin_address}
             destination={request.destination_address}
           />
+          {weekdayList(request) && (
+            <div className="text-xs text-neutral-600">
+              Wochentage: {weekdayList(request)}
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
             {request.passenger?.first_name && (
               <span className="text-neutral-600">
@@ -700,14 +709,23 @@ function recurrenceLabel(t: {
   recurrence_weekdays: number[] | null;
 }): string | null {
   if (t.recurrence === 'daily') return 'täglich';
-  if (t.recurrence === 'weekly') {
-    const days = (t.recurrence_weekdays ?? [])
-      .map((d) => WEEKDAYS[d])
-      .filter(Boolean)
-      .join(', ');
-    return days ? `wöchentlich · ${days}` : 'wöchentlich';
-  }
+  if (t.recurrence === 'weekly') return 'wöchentlich';
   return null;
+}
+
+const WEEKDAY_ABBR = ['', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']; // 1=Mon … 7=Sun
+
+/** Weekday list for a weekly trip (shown in the expanded card), else null. */
+function weekdayList(t: {
+  recurrence: string;
+  recurrence_weekdays: number[] | null;
+}): string | null {
+  if (t.recurrence !== 'weekly') return null;
+  const days = (t.recurrence_weekdays ?? [])
+    .map((d) => WEEKDAY_ABBR[d])
+    .filter(Boolean)
+    .join(', ');
+  return days || null;
 }
 
 function fmtDay(iso: string): string {
