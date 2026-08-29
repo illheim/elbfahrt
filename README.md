@@ -228,6 +228,36 @@ Notes:
 
 ---
 
+## Error monitoring
+
+Errors from both the frontend and Strapi are reported to a **self‑hosted
+[Bugsink](https://www.bugsink.com/)** instance (Sentry‑SDK compatible) — a single
+lightweight container in the compose stack, published only at
+`errors.elb-fahrt.de`. No third‑party service is involved (`PHONEHOME=False`),
+and a PII scrubber runs in every event's `beforeSend` (drops user, cookies,
+headers, query strings; redacts email/phone patterns), so no personal data
+leaves the app — important given minors on the platform.
+
+The SDKs are **inert until a DSN is set**, so the app runs fine before Bugsink is
+configured. One‑time setup:
+
+1. Set `BUGSINK_SECRET_KEY` (`openssl rand -base64 50`) and `BUGSINK_SUPERUSER`
+   (`email:password`) in `.env`, point `errors.elb-fahrt.de` DNS at the host,
+   and deploy: `docker compose -f docker-compose.yml up -d bugsink`.
+2. Log in at `https://errors.elb-fahrt.de`; create two projects, **frontend**
+   and **backend**.
+3. Put their DSNs in `.env` as `SENTRY_DSN_FRONTEND` and `SENTRY_DSN_BACKEND`.
+4. Rebuild — the frontend DSN is baked into the browser bundle, so the frontend
+   must be rebuilt: `docker compose -f docker-compose.yml up -d --build --force-recreate frontend strapi`.
+
+Wiring lives in `frontend/instrumentation*.ts` + `frontend/sentry.*.config.ts`
+(client/server/edge) and `backend/config/plugins.ts` (`sentry` plugin); the
+shared scrubber is `frontend/lib/monitoring/scrub.ts`. Source‑map upload is not
+configured, so frontend stack traces are minified for now — add a Sentry auth
+token + `withSentryConfig` later if readable traces are needed.
+
+---
+
 ## License
 
 Copyright © 2026 **Lucas Millheim**.

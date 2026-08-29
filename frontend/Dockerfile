@@ -30,6 +30,9 @@ ENV NODE_ENV=production
 # on the browser bundle. Passed from docker-compose.yml build.args.
 ARG NEXT_PUBLIC_STRAPI_URL
 ENV NEXT_PUBLIC_STRAPI_URL=$NEXT_PUBLIC_STRAPI_URL
+# Sentry/Bugsink DSN baked into the browser bundle (public identifier; empty OK).
+ARG NEXT_PUBLIC_SENTRY_DSN
+ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 RUN npm run build
 
 # -----------------------------------------------------------

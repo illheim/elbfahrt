@@ -11,3 +11,9 @@ elb-fahrt.de {
 api.elb-fahrt.de {
 	reverse_proxy strapi:1337
 }
+
+# Self-hosted error monitoring (Bugsink). Admin-only; keep it that way via
+# SINGLE_USER + no public registration (see docker-compose.yml).
+errors.elb-fahrt.de {
+	reverse_proxy bugsink:8000
+}

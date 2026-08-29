@@ -16,6 +16,7 @@ import { useRequireAuth } from '@/lib/auth/useRequireAuth';
 import { ApiError } from '@/lib/api/client';
 import { getRide, type RideListItem } from '@/lib/api/rides';
 import { createBooking } from '@/lib/api/bookings';
+import { Departures } from '@/components/Departures';
 
 const WEEKDAYS = ['', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']; // 1=Mon … 7=Sun
 
@@ -152,6 +153,12 @@ export default function RideDetailPage() {
           </p>
         )}
       </section>
+
+      <Departures
+        lat={Number(ride.destination_lat)}
+        lng={Number(ride.destination_lng)}
+        time={ride.departure_at}
+      />
 
       {isOwnRide ? (
         <p className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-600">

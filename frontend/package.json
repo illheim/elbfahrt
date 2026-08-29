@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@protomaps/basemaps": "^5.7.2",
+    "@sentry/nextjs": "^10.72.0",
     "maplibre-gl": "^5.24.0",
     "next": "16.2.6",
     "pmtiles": "^4.4.1",
