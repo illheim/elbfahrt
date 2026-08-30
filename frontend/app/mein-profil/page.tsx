@@ -229,6 +229,39 @@ function ProfileForm({ user }: { user: User }) {
         </button>
       </form>
 
+      <section className="flex flex-col gap-2 rounded-md border border-neutral-200 bg-white p-4">
+        <h2 className="text-sm font-semibold text-neutral-900">Fahrer-Status</h2>
+        {user.driver_status === 'approved' ? (
+          <p className="text-sm text-green-700">
+            ✓ Als Fahrer:in verifiziert
+            {user.driver_id_type === 'fuehrerschein'
+              ? ' (Führerschein)'
+              : user.driver_id_type === 'personalausweis'
+                ? ' (Personalausweis)'
+                : ''}
+            .
+          </p>
+        ) : user.driver_status === 'pending_review' ? (
+          <p className="text-sm text-neutral-700">
+            Ihre Verifizierung wird geprüft. Sie werden freigeschaltet, sobald
+            das erledigt ist.
+          </p>
+        ) : (
+          <>
+            <p className="text-sm text-neutral-600">
+              Sie sind nicht als Fahrer:in verifiziert. Um Fahrten anzubieten,
+              ist eine kurze Verifizierung nötig.
+            </p>
+            <Link
+              href="/verify-driver"
+              className="self-start rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700"
+            >
+              Als Fahrer:in verifizieren
+            </Link>
+          </>
+        )}
+      </section>
+
       <details className="group mt-2 rounded-md border border-red-200 bg-red-50/50">
         <summary className="flex cursor-pointer list-none items-center justify-between p-4 text-sm font-semibold text-red-900 [&::-webkit-details-marker]:hidden">
           Konto löschen

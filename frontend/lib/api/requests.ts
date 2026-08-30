@@ -24,6 +24,8 @@ export interface CreateRideRequestInput {
   flexible_destination: boolean;
   origin_radius_m?: number;
   destination_radius_m?: number;
+  time_window_min?: number;
+  route_duration_s?: number | null;
   notify_on_match?: boolean;
   departure_at: string; // ISO
   return_at?: string | null;

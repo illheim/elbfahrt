@@ -44,6 +44,8 @@ export default function NewRequestPage() {
   const [until, setUntil] = useState('');
   const [seatsNeeded, setSeatsNeeded] = useState(1);
   const [notes, setNotes] = useState('');
+  // Temporal corridor ± minutes for matching (v2.0 M2).
+  const [timeWindowMin, setTimeWindowMin] = useState(30);
   const [notifyOnMatch, setNotifyOnMatch] = useState(true);
 
   const [submitting, setSubmitting] = useState(false);
@@ -110,6 +112,8 @@ export default function NewRequestPage() {
         recurrence_until: recurrence !== 'none' && until ? until : null,
         seats_needed: seatsNeeded,
         notes: notes.trim() || null,
+        route_duration_s: routeInfo?.duration_s ?? null,
+        time_window_min: timeWindowMin,
         notify_on_match: notifyOnMatch,
       });
       setPosted(true);
@@ -187,6 +191,25 @@ export default function NewRequestPage() {
           value={destinationRadiusM}
           onChange={setDestinationRadiusM}
         />
+
+        <label className="flex flex-col gap-1">
+          <span className="flex items-baseline justify-between text-sm text-neutral-700">
+            <span>Wie flexibel ist Ihre Uhrzeit?</span>
+            <strong className="font-medium text-neutral-900">
+              ± {timeWindowMin} min
+            </strong>
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={120}
+            step={15}
+            value={timeWindowMin}
+            onChange={(e) => setTimeWindowMin(Number(e.target.value))}
+            className="w-full accent-neutral-900"
+            aria-label="Zeitfenster in Minuten"
+          />
+        </label>
 
         {origin && destination && (
           <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700">

@@ -38,6 +38,9 @@ function toMatchRide(ride: any, seatsConfirmed: number): MatchRide {
     waypoints: Array.isArray(ride.waypoints)
       ? ride.waypoints.map((w: any) => point(w.lat, w.lng))
       : [],
+    flexible_origin: !!ride.flexible_origin,
+    flexible_destination: !!ride.flexible_destination,
+    route_duration_s: ride.route_duration_s ?? null,
   };
 }
 
@@ -50,7 +53,6 @@ function toMatchGesuch(g: any): MatchGesuch {
     recurrence_weekdays: g.recurrence_weekdays ?? null,
     recurrence_until: g.recurrence_until ?? null,
     departure_at: g.departure_at,
-    departure_window_min: null, // global default (90 min) for v1
     seats_needed: g.seats_needed,
     origin: point(g.origin_lat, g.origin_lng),
     destination: point(g.destination_lat, g.destination_lng),
@@ -58,6 +60,8 @@ function toMatchGesuch(g: any): MatchGesuch {
     destination_radius_m: g.destination_radius_m ?? null,
     flexible_origin: !!g.flexible_origin,
     flexible_destination: !!g.flexible_destination,
+    time_window_min: g.time_window_min ?? null,
+    route_duration_s: g.route_duration_s ?? null,
   };
 }
 

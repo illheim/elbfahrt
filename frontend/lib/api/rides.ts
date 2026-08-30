@@ -69,6 +69,7 @@ export interface CreateRideInput {
   recurrence_until?: string | null; // YYYY-MM-DD
   seats_total: number;
   notes?: string | null;
+  route_duration_s?: number | null; // OSRM duration through waypoints (matching)
 }
 
 export async function createRide(input: CreateRideInput): Promise<Ride> {

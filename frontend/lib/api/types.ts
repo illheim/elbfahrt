@@ -119,6 +119,9 @@ export interface RideRequest {
   // derive `radius ?? (flexible ? 1000 : 0)`.
   origin_radius_m: number | null;
   destination_radius_m: number | null;
+  // Temporal corridor (± minutes) + the rider's own trip duration, for matching.
+  time_window_min: number | null;
+  route_duration_s: number | null;
   // Email me when a new Angebot matches this Gesuch (v2.0 Stage 2).
   notify_on_match: boolean;
 

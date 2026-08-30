@@ -158,6 +158,7 @@ export default function NewRidePage() {
         recurrence_until: recurrence !== 'none' && until ? until : null,
         seats_total: seats,
         notes: notes.trim() || null,
+        route_duration_s: routeInfo?.duration_s ?? null,
       });
       router.push('/');
     } catch (err) {

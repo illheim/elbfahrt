@@ -618,6 +618,7 @@ export interface ApiRideRequestRideRequest extends Struct.CollectionTypeSchema {
     recurrence_until: Schema.Attribute.Date;
     recurrence_weekdays: Schema.Attribute.JSON;
     return_at: Schema.Attribute.DateTime;
+    route_duration_s: Schema.Attribute.Integer;
     seats_needed: Schema.Attribute.Integer &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
@@ -631,6 +632,15 @@ export interface ApiRideRequestRideRequest extends Struct.CollectionTypeSchema {
     status: Schema.Attribute.Enumeration<['active', 'fulfilled', 'cancelled']> &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'active'>;
+    time_window_min: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 240;
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<30>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
