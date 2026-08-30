@@ -172,9 +172,8 @@ export default function NewRidePage() {
 
   if (isLoading || !user) return null;
 
-  const approved =
-    (user.roles?.includes('driver') ?? false) &&
-    user.driver_status === 'approved';
+  // driver_status is the gate (matches the API); roles is a soft preference (B1).
+  const approved = user.driver_status === 'approved';
 
   if (!approved) {
     return (

@@ -103,6 +103,38 @@ async function sendMatchEmail(
   await strapi.plugin('email').service('email').send({ to: passenger.email, subject, text, html });
 }
 
+const FRONTEND_URL = () => process.env.FRONTEND_URL ?? 'https://elb-fahrt.de';
+
+/** Confirmed-booking count for a ride (one-off capacity). */
+async function seatsConfirmed(strapi: any, rideId: number): Promise<number> {
+  return strapi.db.query('api::booking.booking').count({
+    where: { ride: rideId, status: 'confirmed' },
+  });
+}
+
+/**
+ * Email the Gesuch's rider about a matching ride — once per (ride, gesuch) pair.
+ * The ledger makes this idempotent across BOTH match directions, so a rider is
+ * never emailed twice for the same ride. Returns true if an email was sent.
+ */
+async function notifyMatch(
+  strapi: any,
+  ride: any,
+  gesuch: any
+): Promise<boolean> {
+  if (!gesuch.passenger?.email) return false;
+  const already = await strapi.db
+    .query('api::match-notification.match-notification')
+    .count({ where: { ride: ride.id, ride_request: gesuch.id } });
+  if (already > 0) return false;
+
+  await sendMatchEmail(strapi, gesuch.passenger, ride, FRONTEND_URL());
+  await strapi.db.query('api::match-notification.match-notification').create({
+    data: { ride: ride.id, ride_request: gesuch.id, sent_at: new Date(), channel: 'email' },
+  });
+  return true;
+}
+
 /** Match a freshly created/activated ride against all active Gesuche. */
 export async function runMatchingForRide(
   strapi: any,
@@ -119,49 +151,27 @@ export async function runMatchingForRide(
     return;
   }
 
-  const seatsConfirmed = await strapi.db.query('api::booking.booking').count({
-    where: { ride: ride.id, status: 'confirmed' },
-  });
-  const matchRide = toMatchRide(ride, seatsConfirmed);
+  const matchRide = toMatchRide(ride, await seatsConfirmed(strapi, ride.id));
 
   // Scan ALL active Gesuche and let the matcher decide on notifications: a
   // legacy row created before `notify_on_match` existed has NULL (Strapi does
   // not backfill defaults), which the matcher treats as opt-in (`?? true`).
-  // Filtering `notify_on_match: true` here would wrongly drop those NULL rows.
   const gesuche = await strapi.db.query('api::ride-request.ride-request').findMany({
     where: { status: 'active' },
     populate: { passenger: { select: ['id', 'email', 'first_name'] } },
   });
 
-  const frontendUrl = process.env.FRONTEND_URL ?? 'https://elb-fahrt.de';
   let matched = 0;
   let sent = 0;
-
   for (const g of gesuche) {
     try {
-      if (!g.passenger?.email) continue;
       const result = matchRideToRequest(matchRide, toMatchGesuch(g));
       if (!result.match) {
         strapi.log.debug(`[matching] ride ${rideId} × gesuch ${g.id}: ${result.reason}`);
         continue;
       }
       matched++;
-
-      const already = await strapi.db
-        .query('api::match-notification.match-notification')
-        .count({ where: { ride: ride.id, ride_request: g.id } });
-      if (already > 0) continue;
-
-      await sendMatchEmail(strapi, g.passenger, ride, frontendUrl);
-      await strapi.db.query('api::match-notification.match-notification').create({
-        data: {
-          ride: ride.id,
-          ride_request: g.id,
-          sent_at: new Date(),
-          channel: 'email',
-        },
-      });
-      sent++;
+      if (await notifyMatch(strapi, ride, g)) sent++;
     } catch (err) {
       strapi.log.error(`[matching] gesuch ${g?.id} failed: ${err}`);
     }
@@ -169,6 +179,55 @@ export async function runMatchingForRide(
 
   strapi.log.info(
     `[matching] ride ${rideId}: scanned ${gesuche.length} active Gesuch(e), ` +
+      `${matched} matched, ${sent} emailed.`
+  );
+}
+
+/**
+ * Reverse direction (beta bug B2): match a freshly created/activated Gesuch
+ * against all active rides, emailing the rider about any that already fit — so a
+ * rider who posts a Gesuch after a matching ride exists is notified immediately.
+ */
+export async function runMatchingForGesuch(
+  strapi: any,
+  gesuchId: number
+): Promise<void> {
+  if (process.env.MATCH_NOTIFY_ENABLED === 'false') return;
+
+  const gesuch = await strapi.db.query('api::ride-request.ride-request').findOne({
+    where: { id: gesuchId },
+    populate: { passenger: { select: ['id', 'email', 'first_name'] } },
+  });
+  if (!gesuch || gesuch.status !== 'active' || !gesuch.passenger?.email) {
+    strapi.log.info(`[matching] gesuch ${gesuchId}: not active / no email, skipping.`);
+    return;
+  }
+  const matchGesuch = toMatchGesuch(gesuch);
+
+  const rides = await strapi.db.query('api::ride.ride').findMany({
+    where: { status: 'active' },
+    populate: { driver: { select: ['id'] }, waypoints: true },
+  });
+
+  let matched = 0;
+  let sent = 0;
+  for (const ride of rides) {
+    try {
+      const matchRide = toMatchRide(ride, await seatsConfirmed(strapi, ride.id));
+      const result = matchRideToRequest(matchRide, matchGesuch);
+      if (!result.match) {
+        strapi.log.debug(`[matching] gesuch ${gesuchId} × ride ${ride.id}: ${result.reason}`);
+        continue;
+      }
+      matched++;
+      if (await notifyMatch(strapi, ride, gesuch)) sent++;
+    } catch (err) {
+      strapi.log.error(`[matching] ride ${ride?.id} failed: ${err}`);
+    }
+  }
+
+  strapi.log.info(
+    `[matching] gesuch ${gesuchId}: scanned ${rides.length} active ride(s), ` +
       `${matched} matched, ${sent} emailed.`
   );
 }

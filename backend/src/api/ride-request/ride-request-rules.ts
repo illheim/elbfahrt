@@ -46,15 +46,17 @@ export function ageYears(
   return age;
 }
 
-/** True only for a verified driver: approved status AND the `driver` role. */
+/**
+ * True for a verified driver. `driver_status === 'approved'` (passed the ID
+ * check, admin-approved) is the source of truth — the same gate the ride-create
+ * controller uses. The `roles` array is a soft self-selection (which tab the
+ * user prefers), NOT a trust signal, and an admin can approve a driver without
+ * it ever containing 'driver' — so we must not gate on it (beta bug B1).
+ */
 export function isApprovedDriver(
   user: { driver_status?: string; roles?: string[] } | null | undefined
 ): boolean {
-  return (
-    !!user &&
-    user.driver_status === 'approved' &&
-    (user.roles ?? []).includes('driver')
-  );
+  return !!user && user.driver_status === 'approved';
 }
 
 /**

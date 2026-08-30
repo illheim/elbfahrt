@@ -123,9 +123,9 @@ export default function OverviewPage() {
 
   if (isLoading || !user) return null;
 
-  const isApprovedDriver =
-    (user.roles?.includes('driver') ?? false) &&
-    user.driver_status === 'approved';
+  // driver_status is the source of truth (matches the API's ride-create guard);
+  // roles is a soft self-selection, so don't gate on it (beta bug B1).
+  const isApprovedDriver = user.driver_status === 'approved';
   const filtersActive =
     filters.from !== '' ||
     filters.to !== '' ||

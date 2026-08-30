@@ -52,14 +52,11 @@ describe('ageYears', () => {
 });
 
 describe('isApprovedDriver', () => {
-  it('true only for approved status AND the driver role', () => {
+  it('true for approved status, regardless of the soft roles array (B1)', () => {
     expect(isApprovedDriver({ driver_status: 'approved', roles: ['driver'] })).toBe(true);
-  });
-
-  it('false when the role is missing', () => {
-    expect(isApprovedDriver({ driver_status: 'approved', roles: ['passenger'] })).toBe(false);
-    expect(isApprovedDriver({ driver_status: 'approved', roles: [] })).toBe(false);
-    expect(isApprovedDriver({ driver_status: 'approved' })).toBe(false);
+    expect(isApprovedDriver({ driver_status: 'approved', roles: ['passenger'] })).toBe(true);
+    expect(isApprovedDriver({ driver_status: 'approved', roles: [] })).toBe(true);
+    expect(isApprovedDriver({ driver_status: 'approved' })).toBe(true);
   });
 
   it('false when not approved', () => {

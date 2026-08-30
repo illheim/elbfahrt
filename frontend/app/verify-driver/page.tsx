@@ -97,9 +97,16 @@ export default function VerifyDriverPage() {
         title="Bereits verifiziert"
         subtitle="Sie sind als Fahrer:in freigeschaltet und können Fahrten anbieten."
       >
-        <PrimaryButton onClick={() => router.push('/')}>
-          Weiter zur Übersicht
+        <PrimaryButton onClick={() => router.push('/rides/new')}>
+          Fahrt anbieten
         </PrimaryButton>
+        <button
+          type="button"
+          onClick={() => router.push('/')}
+          className="text-sm font-medium text-neutral-600 underline hover:text-neutral-900"
+        >
+          Weiter zur Übersicht
+        </button>
       </Shell>
     );
   }
