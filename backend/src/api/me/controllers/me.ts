@@ -27,6 +27,7 @@ import { errors } from '@strapi/utils';
 import { isValidIdNumber, type IdType } from '../../../utils/modulo10';
 import { CONTACT_USER_FIELDS } from '../../../utils/safe-user';
 import { isContactVisible } from '../../booking/booking-rules';
+import { rankRidesForGesuch } from '../../ride/matching-service';
 
 const { ValidationError } = errors;
 
@@ -234,5 +235,56 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       .delete({ where: { id: uid } });
 
     return { deleted: true };
+  },
+
+  /**
+   * GET /me/requests/:id/matches — ranked rides that fit the caller's own
+   * Gesuch (M5). `:id` is the Gesuch's documentId. Ownership is enforced here:
+   * the Gesuch must belong to ctx.state.user. The response is PII-safe (driver
+   * reduced to first_name, same policy as the browse surfaces) and carries the
+   * match tier ("full" | "partial") + penalty so the UI can group and sort.
+   */
+  async gesuchMatches(ctx) {
+    const user = ctx.state.user;
+    if (!user) {
+      return ctx.unauthorized('Not authenticated');
+    }
+
+    const documentId = ctx.params.id as string;
+    const gesuch = await strapi.db
+      .query('api::ride-request.ride-request')
+      .findOne({
+        where: { documentId },
+        populate: { passenger: { select: ['id'] } },
+      });
+
+    if (!gesuch) {
+      return ctx.notFound('Gesuch not found');
+    }
+    if (gesuch.passenger?.id !== user.id) {
+      // Don't reveal existence of someone else's Gesuch.
+      return ctx.notFound('Gesuch not found');
+    }
+
+    const ranked = await rankRidesForGesuch(strapi, gesuch.id);
+
+    return {
+      data: ranked.map(({ ride, tier, penalty }) => ({
+        documentId: ride.documentId,
+        origin_address: ride.origin_address,
+        destination_address: ride.destination_address,
+        origin_lat: ride.origin_lat,
+        origin_lng: ride.origin_lng,
+        destination_lat: ride.destination_lat,
+        destination_lng: ride.destination_lng,
+        departure_at: ride.departure_at,
+        recurrence: ride.recurrence,
+        recurrence_weekdays: ride.recurrence_weekdays,
+        seats_total: ride.seats_total,
+        driver: ride.driver ? { first_name: ride.driver.first_name } : null,
+        tier,
+        penalty,
+      })),
+    };
   },
 });

@@ -226,3 +226,72 @@ export function matchRideToRequest(
   if (!pointTimeMatch(ride, gesuch)) return { match: false, reason: 'geo_time' };
   return { match: true };
 }
+
+// --- M4: best-match scoring (for the in-app "passende Fahrten" view) ---------
+
+export interface MatchScore {
+  tier: 'full' | 'partial'; // full = matches; partial = same-day near-miss
+  penalty: number; // 0 for full; higher = worse near-miss (for ranking)
+}
+
+// Combine a time gap (minutes) into the spatial gap (metres) for one penalty.
+const MIN_TO_M = 100;
+// Beyond this a same-day ride is too far off to be a useful "best match".
+const MAX_PARTIAL_PENALTY = 15000;
+
+/**
+ * Score a ride as a candidate for a Gesuch, for VIEWING (ignores
+ * `notify_on_match`, which only governs email). Returns null when the ride isn't
+ * a candidate at all (inactive, own ride, no seats, different day, or too far
+ * off). Otherwise the best (lowest-penalty) pickup→drop-off pairing:
+ *   penalty 0        → tier "full" (a real match)
+ *   penalty > 0      → tier "partial" (the tester's same-day "bester Match")
+ */
+export function scoreRideForGesuch(
+  ride: MatchRide,
+  gesuch: MatchGesuch
+): MatchScore | null {
+  if (ride.status !== 'active' || gesuch.status !== 'active') return null;
+  if (ride.driver_id != null && ride.driver_id === gesuch.passenger_id) return null;
+  if (
+    ride.recurrence === 'none' &&
+    ride.seats_total - ride.seats_confirmed < gesuch.seats_needed
+  ) {
+    return null;
+  }
+  if (!datesCompatible(ride, gesuch)) return null;
+
+  const seq: GeoPoint[] = [ride.origin, ...(ride.waypoints ?? []), ride.destination];
+  const len = seq.length;
+  const oRad = effectiveRadiusM(gesuch.origin_radius_m, gesuch.flexible_origin);
+  const dRad = effectiveRadiusM(gesuch.destination_radius_m, gesuch.flexible_destination);
+  const window = gesuch.time_window_min ?? DEFAULT_WINDOW_MIN;
+  const gPickup = localParts(gesuch.departure_at).minutes;
+  const gDrop =
+    gesuch.route_duration_s != null
+      ? gPickup + Math.round(gesuch.route_duration_s / 60)
+      : null;
+
+  let best = Infinity;
+  for (let i = 0; i < len; i++) {
+    const sp1 = Math.max(
+      0,
+      haversineM(seq[i], gesuch.origin) - (oRad + rideRadiusAt(ride, i, len))
+    );
+    const rPickup = rideMinuteAt(ride, i, len);
+    const tp1 = rPickup !== null ? Math.max(0, Math.abs(rPickup - gPickup) - window) : 0;
+    for (let j = len - 1; j > i; j--) {
+      const sp2 = Math.max(
+        0,
+        haversineM(seq[j], gesuch.destination) - (dRad + rideRadiusAt(ride, j, len))
+      );
+      const rDrop = rideMinuteAt(ride, j, len);
+      const tp2 =
+        rDrop !== null && gDrop !== null ? Math.max(0, Math.abs(rDrop - gDrop) - window) : 0;
+      const penalty = sp1 + sp2 + (tp1 + tp2) * MIN_TO_M;
+      if (penalty < best) best = penalty;
+    }
+  }
+  if (best === Infinity || best > MAX_PARTIAL_PENALTY) return null;
+  return { tier: best === 0 ? 'full' : 'partial', penalty: Math.round(best) };
+}

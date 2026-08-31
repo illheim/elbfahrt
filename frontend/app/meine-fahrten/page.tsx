@@ -10,6 +10,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRequireAuth } from '@/lib/auth/useRequireAuth';
 import {
   getMyBookings,
@@ -22,7 +23,11 @@ import {
   type Contact,
 } from '@/lib/api/bookings';
 import { cancelRide } from '@/lib/api/rides';
-import { setRequestNotify } from '@/lib/api/requests';
+import {
+  setRequestNotify,
+  getGesuchMatches,
+  type GesuchMatch,
+} from '@/lib/api/requests';
 import { CardSummary } from '@/components/CardSummary';
 import type { BookingStatus } from '@/lib/api/types';
 
@@ -287,6 +292,9 @@ function RequestCard({ request }: { request: MyRideRequest }) {
   // Legacy Gesuche have null (treated as opt-in by the matcher) — show as on.
   const [notify, setNotify] = useState(request.notify_on_match ?? true);
   const [savingNotify, setSavingNotify] = useState(false);
+  // Matching rides, loaded lazily the first time the card is expanded.
+  const [matches, setMatches] = useState<GesuchMatch[] | null>(null);
+  const [matchesError, setMatchesError] = useState(false);
   const recurring = request.recurrence && request.recurrence !== 'none';
   const when = `${fmtDay(request.departure_at)} · ${fmtTime(
     request.departure_at
@@ -304,6 +312,19 @@ function RequestCard({ request }: { request: MyRideRequest }) {
     }
   }
 
+  function onToggleOpen() {
+    const next = !open;
+    setOpen(next);
+    if (next && matches === null && !matchesError) {
+      getGesuchMatches(request.documentId)
+        .then(setMatches)
+        .catch(() => setMatchesError(true));
+    }
+  }
+
+  const full = matches?.filter((m) => m.tier === 'full') ?? [];
+  const partial = matches?.filter((m) => m.tier === 'partial') ?? [];
+
   return (
     <div className="overflow-hidden rounded-md border border-neutral-200 bg-neutral-50">
       <CardSummary
@@ -311,7 +332,7 @@ function RequestCard({ request }: { request: MyRideRequest }) {
         destination={request.destination_address}
         when={when}
         open={open}
-        onToggle={() => setOpen((v) => !v)}
+        onToggle={onToggleOpen}
         badge={<MutedBadge>Gesuch</MutedBadge>}
       />
       {open && (
@@ -321,6 +342,40 @@ function RequestCard({ request }: { request: MyRideRequest }) {
             <span className="text-neutral-300">↓</span>
             <span>{request.destination_address}</span>
           </div>
+
+          <div className="flex flex-col gap-2 pt-1">
+            <span className="text-xs font-medium uppercase tracking-wide text-neutral-400">
+              Passende Fahrten
+            </span>
+            {matchesError ? (
+              <p className="text-xs text-neutral-400">
+                Passende Fahrten konnten nicht geladen werden.
+              </p>
+            ) : matches === null ? (
+              <p className="text-xs text-neutral-400">Wird gesucht…</p>
+            ) : full.length === 0 && partial.length === 0 ? (
+              <p className="text-xs text-neutral-400">
+                Noch keine passende Fahrt gefunden.
+              </p>
+            ) : (
+              <>
+                {full.map((m) => (
+                  <MatchRow key={m.documentId} match={m} />
+                ))}
+                {partial.length > 0 && (
+                  <>
+                    <span className="pt-1 text-xs text-neutral-400">
+                      Fast passend
+                    </span>
+                    {partial.map((m) => (
+                      <MatchRow key={m.documentId} match={m} />
+                    ))}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+
           <div className="text-xs text-neutral-400">
             Sichtbar für Fahrer:innen · wartet auf eine passende Fahrt.
           </div>
@@ -432,6 +487,30 @@ function OfferedRideCard({
         </div>
       )}
     </div>
+  );
+}
+
+/** One matching ride under a Gesuch — links to the ride's detail/booking page. */
+function MatchRow({ match }: { match: GesuchMatch }) {
+  const recurring = match.recurrence && match.recurrence !== 'none';
+  const when = `${fmtDay(match.departure_at)} · ${fmtTime(
+    match.departure_at
+  )} Uhr${recurring ? ' · regelmäßig' : ''}`;
+  return (
+    <Link
+      href={`/rides/${match.documentId}`}
+      className="block rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm transition hover:border-neutral-300 hover:bg-neutral-50"
+    >
+      <div className="font-medium text-neutral-800">
+        {match.origin_address}
+        <span className="text-neutral-400"> → </span>
+        {match.destination_address}
+      </div>
+      <div className="text-xs text-neutral-500">
+        {when}
+        {match.driver?.first_name && ` · ${match.driver.first_name}`}
+      </div>
+    </Link>
   );
 }
 

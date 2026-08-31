@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   matchRideToRequest,
+  scoreRideForGesuch,
   localParts,
   haversineM,
   effectiveRadiusM,
@@ -184,5 +185,29 @@ describe('schedule (day gate)', () => {
         gesuch({ recurrence: 'weekly', recurrence_weekdays: [2], departure_at: '2026-10-01T06:00:00Z', recurrence_until: '2026-12-31' })
       ).reason
     ).toBe('schedule');
+  });
+});
+
+describe('M4 — scoreRideForGesuch (best match)', () => {
+  it('full match scores tier=full, penalty 0', () => {
+    expect(scoreRideForGesuch(ride(), gesuch())).toEqual({ tier: 'full', penalty: 0 });
+  });
+  it('same-day spatial near-miss → partial', () => {
+    const s = scoreRideForGesuch(ride(), gesuch({ origin: FAR }));
+    expect(s?.tier).toBe('partial');
+    expect(s!.penalty).toBeGreaterThan(0);
+  });
+  it('same-day time near-miss → partial', () => {
+    // 40 min off, window 30 → 10 min over → penalty ~1000
+    const s = scoreRideForGesuch(ride(), gesuch({ departure_at: '2026-09-01T06:40:00Z' }));
+    expect(s?.tier).toBe('partial');
+  });
+  it('ignores notify_on_match (that only governs email)', () => {
+    expect(scoreRideForGesuch(ride(), gesuch({ notify_on_match: false }))?.tier).toBe('full');
+  });
+  it('not a candidate: different day, own ride, or far away', () => {
+    expect(scoreRideForGesuch(ride(), gesuch({ departure_at: '2026-09-02T06:00:00Z' }))).toBeNull();
+    expect(scoreRideForGesuch(ride({ driver_id: 2 }), gesuch())).toBeNull();
+    expect(scoreRideForGesuch(ride(), gesuch({ origin: { lat: 54.5, lng: 10.35 } }))).toBeNull();
   });
 });

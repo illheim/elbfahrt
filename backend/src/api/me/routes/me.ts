@@ -9,9 +9,9 @@
  * runs, sets `ctx.state.user`, and rejects tokenless requests.
  *
  * Because they're normal content-api routes, the Authenticated role must be
- * granted `me.updateProfile`, `me.listBookings` and `me.deleteAccount` in
- * Settings → Users & Permissions → Roles (Public stays off). The controller
- * still null-checks ctx.state.user as defence-in-depth.
+ * granted `me.updateProfile`, `me.listBookings`, `me.deleteAccount` and
+ * `me.gesuchMatches` in Settings → Users & Permissions → Roles (Public stays
+ * off). The controller still null-checks ctx.state.user as defence-in-depth.
  */
 
 export default {
@@ -30,6 +30,11 @@ export default {
       method: 'DELETE',
       path: '/me/account',
       handler: 'api::me.me.deleteAccount',
+    },
+    {
+      method: 'GET',
+      path: '/me/requests/:id/matches',
+      handler: 'api::me.me.gesuchMatches',
     },
   ],
 };

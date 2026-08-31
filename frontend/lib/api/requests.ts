@@ -105,3 +105,36 @@ export async function getRideRequestContact(
   );
   return res.data?.contact ?? null;
 }
+
+/**
+ * A ride that matches one of the caller's own Gesuche, as ranked by the backend
+ * (`GET /me/requests/:id/matches`). PII-safe: the driver is reduced to a first
+ * name. `tier` is "full" (all criteria met) or "partial" (a near-miss on space
+ * or time); `penalty` sorts within a tier (lower = closer fit).
+ */
+export interface GesuchMatch {
+  documentId: string;
+  origin_address: string;
+  destination_address: string;
+  origin_lat: number;
+  origin_lng: number;
+  destination_lat: number;
+  destination_lng: number;
+  departure_at: string;
+  recurrence: Recurrence;
+  recurrence_weekdays: number[] | null;
+  seats_total: number;
+  driver: { first_name: string } | null;
+  tier: 'full' | 'partial';
+  penalty: number;
+}
+
+/** Ranked rides that fit the caller's own Gesuch. Ownership is enforced server-side. */
+export async function getGesuchMatches(
+  documentId: string
+): Promise<GesuchMatch[]> {
+  const res = await api<{ data: GesuchMatch[] }>(
+    `/api/me/requests/${documentId}/matches`
+  );
+  return res.data ?? [];
+}

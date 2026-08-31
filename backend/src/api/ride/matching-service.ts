@@ -10,10 +10,18 @@
 
 import {
   matchRideToRequest,
+  scoreRideForGesuch,
   type MatchRide,
   type MatchGesuch,
   type GeoPoint,
 } from './matching';
+import { SAFE_USER_FIELDS } from '../../utils/safe-user';
+
+export interface RankedRide {
+  ride: any; // raw entity; the caller (me controller) projects PII-safe fields
+  tier: 'full' | 'partial';
+  penalty: number;
+}
 
 const num = (v: unknown): number =>
   typeof v === 'number' ? v : parseFloat(String(v));
@@ -234,4 +242,39 @@ export async function runMatchingForGesuch(
     `[matching] gesuch ${gesuchId}: scanned ${rides.length} active ride(s), ` +
       `${matched} matched, ${sent} emailed.`
   );
+}
+
+/**
+ * Rank active rides as candidates for a Gesuch, for the in-app "passende
+ * Fahrten" view (M4/M5). Full matches first, then same-day "best matches",
+ * each by ascending penalty. Returns raw ride entities (driver populated with
+ * PII-safe fields only); the caller projects the response.
+ */
+export async function rankRidesForGesuch(
+  strapi: any,
+  gesuchId: number
+): Promise<RankedRide[]> {
+  const gesuch = await strapi.db.query('api::ride-request.ride-request').findOne({
+    where: { id: gesuchId },
+    populate: { passenger: { select: ['id'] } },
+  });
+  if (!gesuch || gesuch.status !== 'active') return [];
+  const matchGesuch = toMatchGesuch(gesuch);
+
+  const rides = await strapi.db.query('api::ride.ride').findMany({
+    where: { status: 'active' },
+    populate: { driver: { select: ['id', ...SAFE_USER_FIELDS] }, waypoints: true },
+  });
+
+  const out: RankedRide[] = [];
+  for (const ride of rides) {
+    const matchRide = toMatchRide(ride, await seatsConfirmed(strapi, ride.id));
+    const score = scoreRideForGesuch(matchRide, matchGesuch);
+    if (score) out.push({ ride, tier: score.tier, penalty: score.penalty });
+  }
+
+  out.sort((a, b) =>
+    a.tier === b.tier ? a.penalty - b.penalty : a.tier === 'full' ? -1 : 1
+  );
+  return out;
 }
