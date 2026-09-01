@@ -26,6 +26,7 @@ import {
   type GesuchContact,
 } from '@/lib/api/requests';
 import { CardSummary } from '@/components/CardSummary';
+import { PhoneNumber } from '@/components/PhoneNumber';
 
 const RideMap = dynamic(
   () => import('@/components/RideMap').then((m) => m.RideMap),
@@ -589,9 +590,7 @@ function ContactReveal({ documentId }: { documentId: string }) {
         {contact.phone && (
           <>
             {' · '}
-            <a href={`tel:${contact.phone}`} className="text-accent-700 underline">
-              {contact.phone}
-            </a>
+            <PhoneNumber value={contact.phone} />
           </>
         )}
       </div>

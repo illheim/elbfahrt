@@ -29,6 +29,7 @@ import {
   type GesuchMatch,
 } from '@/lib/api/requests';
 import { CardSummary } from '@/components/CardSummary';
+import { PhoneNumber } from '@/components/PhoneNumber';
 import type { BookingStatus } from '@/lib/api/types';
 
 export default function MyTripsPage() {
@@ -266,12 +267,7 @@ function TripCard({
               {contact?.mobile && (
                 <>
                   {' · '}
-                  <a
-                    href={`tel:${contact.mobile}`}
-                    className="text-accent-700 underline"
-                  >
-                    {contact.mobile}
-                  </a>
+                  <PhoneNumber value={contact.mobile} />
                 </>
               )}
             </div>
@@ -464,12 +460,7 @@ function OfferedRideCard({
                     {b.passenger?.mobile && (
                       <>
                         {' · '}
-                        <a
-                          href={`tel:${b.passenger.mobile}`}
-                          className="text-accent-700 underline"
-                        >
-                          {b.passenger.mobile}
-                        </a>
+                        <PhoneNumber value={b.passenger.mobile} />
                       </>
                     )}
                   </span>
