@@ -143,30 +143,8 @@ export default function OverviewPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 p-4">
-      <div className="flex flex-wrap gap-2">
-        <Link
-          href="/requests/new"
-          className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-800 transition hover:border-neutral-900"
-        >
-          Gesuch aufgeben
-        </Link>
-        {isApprovedDriver ? (
-          <Link
-            href="/rides/new"
-            className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-neutral-700"
-          >
-            Fahrt anbieten
-          </Link>
-        ) : (
-          <Link
-            href="/verify-driver"
-            className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-800 transition hover:border-neutral-900"
-          >
-            Fahrer:in werden
-          </Link>
-        )}
-      </div>
-
+      {/* Create buttons live on Meine Fahrten now (per-tab), per beta slide 7 —
+          the overview is browse-only. */}
       <div className="flex border-b border-neutral-200">
         <TabButton active={tab === 'rides'} onClick={() => setTab('rides')}>
           Angebote

@@ -32,6 +32,12 @@ import { CardSummary } from '@/components/CardSummary';
 import { PhoneNumber } from '@/components/PhoneNumber';
 import type { BookingStatus } from '@/lib/api/types';
 
+// Shared style for the per-tab create button: light by default, fills dark on
+// hover. One class for all three (Gesuch aufgeben / Fahrt anbieten / Fahrer:in
+// werden) so the single visible button never looks arbitrarily emphasised.
+const createButtonClass =
+  'rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-800 transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white';
+
 export default function MyTripsPage() {
   const { user, isLoading } = useRequireAuth();
   const [data, setData] = useState<MyBookings | null>(null);
@@ -107,9 +113,13 @@ export default function MyTripsPage() {
 
   if (isLoading || !user) return null;
 
+  // driver_status is the source of truth (matches the API's ride-create guard).
+  const isApprovedDriver = user.driver_status === 'approved';
+
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-4">
-      <h1 className="text-2xl font-semibold">Meine Fahrten</h1>
+      {/* No page heading — the global nav's "Meine Fahrten" already labels it
+          (beta slide 7: the second heading was redundant). */}
 
       {error && (
         <div
@@ -139,6 +149,26 @@ export default function MyTripsPage() {
             >
               Als Fahrer:in
             </TabButton>
+          </div>
+
+          {/* Each create action lives only in the tab it belongs to
+              (beta slide 7 variant): Mitfahrer → Gesuch, Fahrer → Angebot.
+              Uniform light styling (the two buttons no longer sit together, so
+              a single accent would look arbitrary); fills dark on hover. */}
+          <div className="flex">
+            {tab === 'passenger' ? (
+              <Link href="/requests/new" className={createButtonClass}>
+                Gesuch aufgeben
+              </Link>
+            ) : isApprovedDriver ? (
+              <Link href="/rides/new" className={createButtonClass}>
+                Fahrt anbieten
+              </Link>
+            ) : (
+              <Link href="/verify-driver" className={createButtonClass}>
+                Fahrer:in werden
+              </Link>
+            )}
           </div>
 
           <div className="flex flex-col gap-3">

@@ -93,7 +93,7 @@ Useful local endpoints:
 
 Some settings live in the database, not in code, and must be set once per environment via **Settings → Users & Permissions plugin**:
 
-1. **Roles → Authenticated** — grant `find`, `findOne`, `create`, `update`, `delete` on `ride`, `ride-request`, and `booking`, plus `me.updateProfile`, `me.listBookings`, and `me.deleteAccount`. Confirm the **Public** role has none of these.
+1. **Roles → Authenticated** — grant `find`, `findOne`, `create`, `update`, `delete` on `ride`, `ride-request`, and `booking`, plus `me.updateProfile`, `me.listBookings`, `me.deleteAccount`, and `me.gesuchMatches`. Confirm the **Public** role has none of these.
 2. **Advanced settings** — enable email confirmation; set the redirect URL to `http://localhost:3000/verify-email` (or the production URL).
 3. **Email templates** — set the sender address to a mailbox you can actually send from.
 
