@@ -53,6 +53,7 @@ function denialError(reason: BookingDenialReason) {
     own_ride: 'You cannot book a seat on your own ride.',
     needs_instance_date: 'instance_date is required to book a recurring ride.',
     in_the_past: 'This ride date is in the past.',
+    outside_schedule: 'This date is outside the ride’s schedule.',
     already_booked: 'You already have a seat on this ride.',
     no_seats: 'No seats left on this ride.',
   };
@@ -173,6 +174,8 @@ export default factories.createCoreController('api::booking.booking', ({ strapi 
       userId: user.id,
       instanceDate,
       departureAt: ride.departure_at,
+      recurrenceUntil: ride.recurrence_until ?? null,
+      recurrenceWeekdays: ride.recurrence_weekdays ?? null,
       nowMs: Date.now(),
       seatsTaken,
       passengerAlreadyBooked,

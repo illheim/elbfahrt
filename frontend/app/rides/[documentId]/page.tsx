@@ -257,6 +257,8 @@ function bookingErrorMessage(e: unknown): string {
   switch (reason) {
     case 'in_the_past':
       return 'Diese Fahrt liegt in der Vergangenheit.';
+    case 'outside_schedule':
+      return 'An diesem Tag wird die Fahrt nicht angeboten. Bitte wählen Sie einen Tag innerhalb des Fahrtzeitraums.';
     case 'already_booked':
       return 'Sie haben auf dieser Fahrt bereits einen Platz.';
     case 'no_seats':

@@ -20,6 +20,8 @@ function base(overrides: Partial<BookingRuleInput> = {}): BookingRuleInput {
     userId: 2,
     instanceDate: null,
     departureAt: '2026-06-02T09:00:00Z', // after NOW_MS
+    recurrenceUntil: null,
+    recurrenceWeekdays: null,
     nowMs: NOW_MS,
     seatsTaken: 0,
     passengerAlreadyBooked: false,
@@ -120,9 +122,112 @@ describe('evaluateBooking', () => {
   });
 
   it("allows a recurring instance dated today", () => {
+    // Series starts on/before the booked day, so only the past-check applies.
     expect(
-      evaluateBooking(base({ rideRecurrence: 'weekly', instanceDate: '2026-06-01' }))
+      evaluateBooking(
+        base({
+          rideRecurrence: 'weekly',
+          instanceDate: '2026-06-01',
+          departureAt: '2026-06-01T09:00:00Z',
+        })
+      )
     ).toBeNull();
+  });
+
+  // T3 (beta test log): a recurring booking must fall inside the ride's own
+  // schedule — not before it starts, after it ends, or on a day it skips.
+  it('rejects a daily instance before the series start date', () => {
+    // Daily ride starts 15.09; booking 14.09 must be refused (the reported bug).
+    expect(
+      evaluateBooking(
+        base({
+          rideRecurrence: 'daily',
+          instanceDate: '2026-09-14',
+          departureAt: '2026-09-15T06:00:00Z',
+        })
+      )
+    ).toBe('outside_schedule');
+  });
+
+  it('rejects an instance after recurrence_until', () => {
+    expect(
+      evaluateBooking(
+        base({
+          rideRecurrence: 'daily',
+          instanceDate: '2026-10-05',
+          departureAt: '2026-09-15T06:00:00Z',
+          recurrenceUntil: '2026-09-30',
+        })
+      )
+    ).toBe('outside_schedule');
+  });
+
+  it('rejects a weekly instance on a weekday the ride does not run', () => {
+    // Runs Tuesdays ([2]); 2026-09-21 is a Monday → refused.
+    expect(
+      evaluateBooking(
+        base({
+          rideRecurrence: 'weekly',
+          instanceDate: '2026-09-21',
+          departureAt: '2026-09-15T06:00:00Z',
+          recurrenceWeekdays: [2],
+        })
+      )
+    ).toBe('outside_schedule');
+  });
+
+  it('allows a weekly instance on a scheduled weekday within range', () => {
+    // 2026-09-22 is a Tuesday, within [start, until] → allowed.
+    expect(
+      evaluateBooking(
+        base({
+          rideRecurrence: 'weekly',
+          instanceDate: '2026-09-22',
+          departureAt: '2026-09-15T06:00:00Z',
+          recurrenceUntil: '2026-12-31',
+          recurrenceWeekdays: [2],
+        })
+      )
+    ).toBeNull();
+  });
+
+  it('allows a daily instance within the series range', () => {
+    expect(
+      evaluateBooking(
+        base({
+          rideRecurrence: 'daily',
+          instanceDate: '2026-09-20',
+          departureAt: '2026-09-15T06:00:00Z',
+          recurrenceUntil: '2026-09-30',
+        })
+      )
+    ).toBeNull();
+  });
+
+  it('does not enforce weekdays when none are recorded (malformed weekly)', () => {
+    expect(
+      evaluateBooking(
+        base({
+          rideRecurrence: 'weekly',
+          instanceDate: '2026-09-22',
+          departureAt: '2026-09-15T06:00:00Z',
+          recurrenceWeekdays: null,
+        })
+      )
+    ).toBeNull();
+  });
+
+  it('reports past before outside-schedule', () => {
+    // Before the series start AND before today → the past message wins.
+    expect(
+      evaluateBooking(
+        base({
+          rideRecurrence: 'daily',
+          instanceDate: '2026-05-20',
+          departureAt: '2026-09-15T06:00:00Z',
+        })
+      )
+    ).toBe('in_the_past');
   });
 
   it('reports a missing instance date before the past check', () => {

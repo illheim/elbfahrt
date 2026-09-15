@@ -12,6 +12,7 @@ export type BookingDenialReason =
   | 'own_ride'
   | 'needs_instance_date'
   | 'in_the_past'
+  | 'outside_schedule'
   | 'already_booked'
   | 'no_seats';
 
@@ -30,12 +31,43 @@ export interface BookingRuleInput {
   instanceDate: string | null;
   /** Ride.departure_at (ISO) — used to reject past one-off rides. */
   departureAt: string;
+  /** Ride.recurrence_until (YYYY-MM-DD) — last day of a recurring series, or null. */
+  recurrenceUntil?: string | null;
+  /** Ride.recurrence_weekdays (1=Mon…7=Sun) — the days a weekly ride runs. */
+  recurrenceWeekdays?: number[] | null;
   /** Current time in ms (injected so the rule stays pure/testable). */
   nowMs: number;
   /** Confirmed bookings already on this ride for this instanceDate. */
   seatsTaken: number;
   /** Does this passenger already hold a confirmed seat for this instanceDate? */
   passengerAlreadyBooked: boolean;
+}
+
+const BOOKING_TZ = 'Europe/Berlin';
+const WD_SHORT: Record<string, number> = {
+  Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7,
+};
+
+/** Europe/Berlin calendar date (YYYY-MM-DD) of an ISO timestamp. */
+function berlinYmd(iso: string): string {
+  const p = new Intl.DateTimeFormat('en-GB', {
+    timeZone: BOOKING_TZ,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date(iso));
+  const g = (t: string) => p.find((x) => x.type === t)?.value ?? '';
+  return `${g('year')}-${g('month')}-${g('day')}`;
+}
+
+/**
+ * Weekday (1=Mon…7=Sun, matching the matcher's convention) of a plain calendar
+ * date. Anchored at noon UTC so the date never slips across midnight in Berlin.
+ */
+function weekdayOfDate(ymd: string): number {
+  const p = new Intl.DateTimeFormat('en-GB', {
+    timeZone: BOOKING_TZ, weekday: 'short',
+  }).formatToParts(new Date(`${ymd}T12:00:00Z`));
+  const wd = p.find((x) => x.type === 'weekday')?.value ?? '';
+  return WD_SHORT[wd] ?? 0;
 }
 
 /**
@@ -54,6 +86,35 @@ function isInPast(input: BookingRuleInput): boolean {
 }
 
 /**
+ * Is the chosen instance date outside the ride's own recurring schedule? The
+ * "in the past" check alone let a rider book a date the series doesn't cover —
+ * before it starts, after it ends, or (for weekly) on a day it doesn't run
+ * (beta test T3: a daily ride starting 15.09 accepted a booking for 14.09).
+ * One-off rides have no schedule window, so this never fires for them.
+ *
+ * The weekday rule only applies when we actually know the run-days; a weekly
+ * ride with no weekdays recorded is malformed data, and we don't block a rider
+ * over it (the start/end bounds still apply either way).
+ */
+function isOutsideSchedule(input: BookingRuleInput): boolean {
+  const isRecurring = !!input.rideRecurrence && input.rideRecurrence !== 'none';
+  if (!isRecurring || !input.instanceDate) return false;
+
+  if (input.instanceDate < berlinYmd(input.departureAt)) return true; // before start
+
+  const until = input.recurrenceUntil?.slice(0, 10);
+  if (until && input.instanceDate > until) return true; // after the last day
+
+  if (input.rideRecurrence === 'weekly') {
+    const days = input.recurrenceWeekdays ?? [];
+    if (days.length > 0 && !days.includes(weekdayOfDate(input.instanceDate))) {
+      return true; // a weekday the ride doesn't run
+    }
+  }
+  return false;
+}
+
+/**
  * Decide whether a booking may be created. Returns the first failing reason,
  * or null if the booking is allowed. The check order is significant — it
  * matches the order the controller reports errors in, so the caller sees the
@@ -69,6 +130,7 @@ export function evaluateBooking(input: BookingRuleInput): BookingDenialReason | 
   if (isRecurring && !input.instanceDate) return 'needs_instance_date';
 
   if (isInPast(input)) return 'in_the_past';
+  if (isOutsideSchedule(input)) return 'outside_schedule';
 
   if (input.passengerAlreadyBooked) return 'already_booked';
   if (input.seatsTaken >= input.seatsTotal) return 'no_seats';
