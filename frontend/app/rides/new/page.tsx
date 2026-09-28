@@ -56,10 +56,11 @@ export default function NewRidePage() {
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
 
   // Spatial + temporal flexibility, mirroring the Gesuch composer (beta slide
-  // 10). Default to a small 1 km leeway and ±30 min; the driver can tighten.
+  // 10). Small 1 km spatial leeway by default; departure time defaults to exact
+  // (0) — a driver leaves at a set time and can widen it if they're flexible.
   const [originRadiusM, setOriginRadiusM] = useState(1000);
   const [destinationRadiusM, setDestinationRadiusM] = useState(1000);
-  const [timeWindowMin, setTimeWindowMin] = useState(30);
+  const [timeWindowMin, setTimeWindowMin] = useState(0);
   const [departure, setDeparture] = useState('');
   const [ret, setRet] = useState('');
   const [recurrence, setRecurrence] = useState<Recurrence>('none');

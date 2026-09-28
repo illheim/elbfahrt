@@ -735,7 +735,7 @@ export interface ApiRideRide extends Struct.CollectionTypeSchema {
         },
         number
       > &
-      Schema.Attribute.DefaultTo<30>;
+      Schema.Attribute.DefaultTo<0>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
