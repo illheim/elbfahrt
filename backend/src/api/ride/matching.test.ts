@@ -24,6 +24,9 @@ const RIDE: MatchRide = {
   destination: { lat: 53.36, lng: 10.21 },
   flexible_origin: false,
   flexible_destination: false,
+  origin_radius_m: null,
+  destination_radius_m: null,
+  time_window_min: null,
   route_duration_s: 1200,
 };
 
@@ -134,6 +137,27 @@ describe('M1 — spatial (summed radii)', () => {
   it('matches via a waypoint near the Gesuch origin', () => {
     expect(
       matchRideToRequest(ride({ origin: FAR, waypoints: [{ lat: 53.392, lng: 10.352 }] }), gesuch()).match
+    ).toBe(true);
+  });
+});
+
+describe('N1 — driver-side flexibility (Fahrt anbieten)', () => {
+  it("adds the ride's own radius into the spatial test", () => {
+    // Gesuch origin ~5.5 km away with a 0 m radius → no match on its own…
+    expect(
+      matchRideToRequest(ride(), gesuch({ origin: FAR, origin_radius_m: 0 })).reason
+    ).toBe('geo_time');
+    // …but the ride's explicit 6 km start radius covers it.
+    expect(
+      matchRideToRequest(ride({ origin_radius_m: 6000 }), gesuch({ origin: FAR, origin_radius_m: 0 })).match
+    ).toBe(true);
+  });
+  it("sums the ride's time window with the Gesuch window", () => {
+    // Gesuch departs 40 min later; Gesuch window 30 alone rejects…
+    expect(matchRideToRequest(ride(), gesuch({ departure_at: '2026-09-01T06:40:00Z' })).reason).toBe('geo_time');
+    // …the ride's own ±30 min lifts the combined corridor to 60.
+    expect(
+      matchRideToRequest(ride({ time_window_min: 30 }), gesuch({ departure_at: '2026-09-01T06:40:00Z' })).match
     ).toBe(true);
   });
 });

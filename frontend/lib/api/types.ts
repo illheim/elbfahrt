@@ -81,6 +81,9 @@ export interface Ride {
 
   flexible_origin: boolean;
   flexible_destination: boolean;
+  origin_radius_m: number | null;
+  destination_radius_m: number | null;
+  time_window_min: number | null;
 
   departure_at: string;
   return_at: string | null;

@@ -22,6 +22,7 @@
 import { factories } from '@strapi/strapi';
 import { errors } from '@strapi/utils';
 import { SAFE_USER_FIELDS } from '../../../utils/safe-user';
+import { cappedRecurrenceUntil } from '../../../utils/recurrence';
 
 const { ForbiddenError, NotFoundError, UnauthorizedError } = errors;
 
@@ -112,6 +113,13 @@ export default factories.createCoreController('api::ride.ride', ({ strapi }) => 
     const data = ctx.request.body?.data ?? {};
     await this.validateInput(data, ctx);
     const sanitized = (await this.sanitizeInput(data, ctx)) as Record<string, unknown>;
+
+    // Bound an open-ended recurring series so nothing recurs forever (N5).
+    sanitized.recurrence_until = cappedRecurrenceUntil(
+      sanitized.recurrence as string | undefined,
+      sanitized.departure_at as string | undefined,
+      sanitized.recurrence_until as string | null | undefined
+    );
 
     const entity = await strapi.service('api::ride.ride').create({
       data: { ...sanitized, driver: user.id },

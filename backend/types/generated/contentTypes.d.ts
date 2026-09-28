@@ -671,6 +671,14 @@ export interface ApiRideRide extends Struct.CollectionTypeSchema {
       }>;
     destination_lat: Schema.Attribute.Decimal & Schema.Attribute.Required;
     destination_lng: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    destination_radius_m: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 10000;
+          min: 0;
+        },
+        number
+      >;
     driver: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.user'
@@ -690,6 +698,14 @@ export interface ApiRideRide extends Struct.CollectionTypeSchema {
       }>;
     origin_lat: Schema.Attribute.Decimal & Schema.Attribute.Required;
     origin_lng: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    origin_radius_m: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 10000;
+          min: 0;
+        },
+        number
+      >;
     publishedAt: Schema.Attribute.DateTime;
     recurrence: Schema.Attribute.Enumeration<['none', 'weekly', 'daily']> &
       Schema.Attribute.Required &
@@ -711,6 +727,15 @@ export interface ApiRideRide extends Struct.CollectionTypeSchema {
     status: Schema.Attribute.Enumeration<['active', 'cancelled', 'completed']> &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'active'>;
+    time_window_min: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 240;
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<30>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

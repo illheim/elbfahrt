@@ -13,6 +13,7 @@
 import { factories } from '@strapi/strapi';
 import { errors } from '@strapi/utils';
 import { SAFE_USER_FIELDS } from '../../../utils/safe-user';
+import { cappedRecurrenceUntil } from '../../../utils/recurrence';
 import {
   GESUCH_CONTACT_ENABLED,
   gesuchContact,
@@ -111,6 +112,13 @@ export default factories.createCoreController(
       const data = ctx.request.body?.data ?? {};
       await this.validateInput(data, ctx);
       const sanitized = (await this.sanitizeInput(data, ctx)) as Record<string, unknown>;
+
+      // Bound an open-ended recurring series so nothing recurs forever (N5).
+      sanitized.recurrence_until = cappedRecurrenceUntil(
+        sanitized.recurrence as string | undefined,
+        sanitized.departure_at as string | undefined,
+        sanitized.recurrence_until as string | null | undefined
+      );
 
       const entity = await strapi.service('api::ride-request.ride-request').create({
         data: { ...sanitized, passenger: user.id },

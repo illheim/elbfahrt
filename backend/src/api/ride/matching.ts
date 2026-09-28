@@ -33,8 +33,11 @@ export interface MatchRide {
   origin: GeoPoint;
   destination: GeoPoint;
   waypoints?: GeoPoint[];
-  flexible_origin: boolean; // ±1 km leeway at the ride's start (M1)
-  flexible_destination: boolean; // ±1 km leeway at the ride's end (M1)
+  flexible_origin: boolean; // legacy ±1 km leeway flag at the ride's start (M1)
+  flexible_destination: boolean; // legacy ±1 km leeway flag at the ride's end (M1)
+  origin_radius_m: number | null; // explicit start leeway, overrides the flag (M1)
+  destination_radius_m: number | null; // explicit end leeway, overrides the flag (M1)
+  time_window_min: number | null; // driver's own ± departure flexibility (M2)
   route_duration_s: number | null; // whole ride origin→destination (M2)
 }
 
@@ -148,9 +151,20 @@ export function datesCompatible(ride: MatchRide, gesuch: MatchGesuch): boolean {
 
 /** The ride's own flexibility radius at sequence index i (waypoints are exact). */
 function rideRadiusAt(ride: MatchRide, i: number, len: number): number {
-  if (i === 0) return ride.flexible_origin ? FLEX_RADIUS_M : 0;
-  if (i === len - 1) return ride.flexible_destination ? FLEX_RADIUS_M : 0;
+  if (i === 0) return effectiveRadiusM(ride.origin_radius_m, ride.flexible_origin);
+  if (i === len - 1) {
+    return effectiveRadiusM(ride.destination_radius_m, ride.flexible_destination);
+  }
   return 0;
+}
+
+/**
+ * Combined temporal window (M2): the pickup/drop-off times match when the two
+ * sides' windows overlap, i.e. |t_ride − t_gesuch| ≤ w_gesuch + w_ride. The
+ * Gesuch keeps the default when unset; a legacy ride with no window adds 0.
+ */
+function combinedWindowMin(ride: MatchRide, gesuch: MatchGesuch): number {
+  return (gesuch.time_window_min ?? DEFAULT_WINDOW_MIN) + (ride.time_window_min ?? 0);
 }
 
 /** The ride's local minute-of-day at index i, or null if unknown (waypoint). */
@@ -178,7 +192,7 @@ export function pointTimeMatch(ride: MatchRide, gesuch: MatchGesuch): boolean {
   const len = seq.length;
   const oRad = effectiveRadiusM(gesuch.origin_radius_m, gesuch.flexible_origin);
   const dRad = effectiveRadiusM(gesuch.destination_radius_m, gesuch.flexible_destination);
-  const window = gesuch.time_window_min ?? DEFAULT_WINDOW_MIN;
+  const window = combinedWindowMin(ride, gesuch);
 
   const gPickup = localParts(gesuch.departure_at).minutes;
   const gDrop =
@@ -265,7 +279,7 @@ export function scoreRideForGesuch(
   const len = seq.length;
   const oRad = effectiveRadiusM(gesuch.origin_radius_m, gesuch.flexible_origin);
   const dRad = effectiveRadiusM(gesuch.destination_radius_m, gesuch.flexible_destination);
-  const window = gesuch.time_window_min ?? DEFAULT_WINDOW_MIN;
+  const window = combinedWindowMin(ride, gesuch);
   const gPickup = localParts(gesuch.departure_at).minutes;
   const gDrop =
     gesuch.route_duration_s != null

@@ -38,6 +38,9 @@
     },
     "flexible_origin": { "type": "boolean", "default": false },
     "flexible_destination": { "type": "boolean", "default": false },
+    "origin_radius_m": { "type": "integer", "min": 0, "max": 10000 },
+    "destination_radius_m": { "type": "integer", "min": 0, "max": 10000 },
+    "time_window_min": { "type": "integer", "min": 0, "max": 240, "default": 30 },
     "departure_at": { "type": "datetime", "required": true },
     "return_at": { "type": "datetime" },
     "recurrence": {

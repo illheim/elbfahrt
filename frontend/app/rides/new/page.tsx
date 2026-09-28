@@ -22,6 +22,8 @@ import { ApiError } from '@/lib/api/client';
 import { getRoute, type GeoResult, type RouteInfo } from '@/lib/api/geo';
 import { createRide } from '@/lib/api/rides';
 import { AddressField } from '@/components/AddressField';
+import { RadiusSlider } from '@/components/RadiusSlider';
+import { TimeWindowSlider } from '@/components/TimeWindowSlider';
 import { toDateTimeLocalValue } from '@/lib/datetime';
 import type { Recurrence } from '@/lib/api/types';
 
@@ -53,8 +55,11 @@ export default function NewRidePage() {
   >([]);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
 
-  const [flexibleOrigin, setFlexibleOrigin] = useState(false);
-  const [flexibleDestination, setFlexibleDestination] = useState(false);
+  // Spatial + temporal flexibility, mirroring the Gesuch composer (beta slide
+  // 10). Default to a small 1 km leeway and ±30 min; the driver can tighten.
+  const [originRadiusM, setOriginRadiusM] = useState(1000);
+  const [destinationRadiusM, setDestinationRadiusM] = useState(1000);
+  const [timeWindowMin, setTimeWindowMin] = useState(30);
   const [departure, setDeparture] = useState('');
   const [ret, setRet] = useState('');
   const [recurrence, setRecurrence] = useState<Recurrence>('none');
@@ -149,8 +154,11 @@ export default function NewRidePage() {
           lat: w.lat,
           lng: w.lng,
         })),
-        flexible_origin: flexibleOrigin,
-        flexible_destination: flexibleDestination,
+        flexible_origin: originRadiusM > 0,
+        flexible_destination: destinationRadiusM > 0,
+        origin_radius_m: originRadiusM,
+        destination_radius_m: destinationRadiusM,
+        time_window_min: timeWindowMin,
         departure_at: new Date(departure).toISOString(),
         return_at: ret ? new Date(ret).toISOString() : null,
         recurrence,
@@ -216,31 +224,31 @@ export default function NewRidePage() {
           label="Start"
           value={origin}
           onSelect={pickOrigin}
-          flexible={flexibleOrigin}
+          radiusM={originRadiusM}
         />
-        <label className="flex items-center gap-2 text-sm text-neutral-700">
-          <input
-            type="checkbox"
-            checked={flexibleOrigin}
-            onChange={(e) => setFlexibleOrigin(e.target.checked)}
-          />
-          Start ist flexibel (±1 km)
-        </label>
+        <RadiusSlider
+          label="Wie weit vom Start dürfen Sie abholen?"
+          value={originRadiusM}
+          onChange={setOriginRadiusM}
+        />
 
         <AddressField
           label="Ziel"
           value={destination}
           onSelect={pickDestination}
-          flexible={flexibleDestination}
+          radiusM={destinationRadiusM}
         />
-        <label className="flex items-center gap-2 text-sm text-neutral-700">
-          <input
-            type="checkbox"
-            checked={flexibleDestination}
-            onChange={(e) => setFlexibleDestination(e.target.checked)}
-          />
-          Ziel ist flexibel (±1 km)
-        </label>
+        <RadiusSlider
+          label="Wie weit vom Ziel dürfen Sie absetzen?"
+          value={destinationRadiusM}
+          onChange={setDestinationRadiusM}
+        />
+
+        <TimeWindowSlider
+          label="Wie flexibel ist Ihre Abfahrtszeit?"
+          value={timeWindowMin}
+          onChange={setTimeWindowMin}
+        />
 
         <div className="flex flex-col gap-2">
           <span className="text-sm font-medium text-neutral-800">
@@ -413,6 +421,11 @@ export default function NewRidePage() {
                 onChange={(e) => setUntil(e.target.value)}
                 className={inputClass}
               />
+              {!until && (
+                <span className="text-xs text-neutral-500">
+                  Ohne Enddatum endet die Serie automatisch nach 3 Monaten.
+                </span>
+              )}
             </label>
           )}
         </fieldset>

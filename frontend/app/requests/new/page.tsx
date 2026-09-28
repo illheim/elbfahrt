@@ -13,6 +13,8 @@ import { ApiError } from '@/lib/api/client';
 import { getRoute, type GeoResult, type RouteInfo } from '@/lib/api/geo';
 import { createRideRequest } from '@/lib/api/requests';
 import { AddressField } from '@/components/AddressField';
+import { RadiusSlider } from '@/components/RadiusSlider';
+import { TimeWindowSlider } from '@/components/TimeWindowSlider';
 import { toDateTimeLocalValue } from '@/lib/datetime';
 import type { Recurrence } from '@/lib/api/types';
 
@@ -192,24 +194,11 @@ export default function NewRequestPage() {
           onChange={setDestinationRadiusM}
         />
 
-        <label className="flex flex-col gap-1">
-          <span className="flex items-baseline justify-between text-sm text-neutral-700">
-            <span>Wie flexibel ist Ihre Uhrzeit?</span>
-            <strong className="font-medium text-neutral-900">
-              ± {timeWindowMin} min
-            </strong>
-          </span>
-          <input
-            type="range"
-            min={0}
-            max={120}
-            step={15}
-            value={timeWindowMin}
-            onChange={(e) => setTimeWindowMin(Number(e.target.value))}
-            className="w-full accent-neutral-900"
-            aria-label="Zeitfenster in Minuten"
-          />
-        </label>
+        <TimeWindowSlider
+          label="Wie flexibel ist Ihre Uhrzeit?"
+          value={timeWindowMin}
+          onChange={setTimeWindowMin}
+        />
 
         {origin && destination && (
           <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700">
@@ -319,6 +308,11 @@ export default function NewRequestPage() {
                 onChange={(e) => setUntil(e.target.value)}
                 className={inputClass}
               />
+              {!until && (
+                <span className="text-xs text-neutral-500">
+                  Ohne Enddatum endet die Serie automatisch nach 3 Monaten.
+                </span>
+              )}
             </label>
           )}
         </fieldset>
@@ -367,44 +361,6 @@ export default function NewRequestPage() {
       </form>
     </main>
   );
-}
-
-/** Slider for a pickup/drop-off radius in metres (0 = exact). */
-function RadiusSlider({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  onChange: (m: number) => void;
-}) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="flex items-baseline justify-between text-sm text-neutral-700">
-        <span>{label}</span>
-        <strong className="font-medium text-neutral-900">
-          {fmtRadius(value)}
-        </strong>
-      </span>
-      <input
-        type="range"
-        min={0}
-        max={10000}
-        step={500}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-neutral-900"
-        aria-label={label}
-      />
-    </label>
-  );
-}
-
-/** Radius label: 0 → "genau hier", else "± X,X km". */
-function fmtRadius(m: number): string {
-  if (m <= 0) return 'genau hier';
-  return `± ${(m / 1000).toFixed(1).replace('.', ',')} km`;
 }
 
 function fmtDistance(m: number): string {

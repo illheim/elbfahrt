@@ -28,6 +28,7 @@
 import { factories } from '@strapi/strapi';
 import { errors } from '@strapi/utils';
 import { SAFE_USER_FIELDS } from '../../../utils/safe-user';
+import { fulfilMatchingGesuche } from '../../ride/matching-service';
 import {
   buildBookingScope,
   evaluateBooking,
@@ -196,6 +197,12 @@ export default factories.createCoreController('api::booking.booking', ({ strapi 
         status: 'confirmed',
       },
     });
+
+    // Close any of the caller's own open Gesuche that this ride fully covers
+    // (beta slide 13). Fire-and-forget so it never blocks the booking response.
+    void fulfilMatchingGesuche(strapi, ride.id, user.id).catch((err) =>
+      strapi.log.error(`[matching] fulfil-on-booking failed for ride ${ride.id}: ${err}`)
+    );
 
     const sanitizedEntity = await this.sanitizeOutput(entity, ctx);
     ctx.status = 201;

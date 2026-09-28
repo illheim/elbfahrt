@@ -48,6 +48,9 @@ function toMatchRide(ride: any, seatsConfirmed: number): MatchRide {
       : [],
     flexible_origin: !!ride.flexible_origin,
     flexible_destination: !!ride.flexible_destination,
+    origin_radius_m: ride.origin_radius_m ?? null,
+    destination_radius_m: ride.destination_radius_m ?? null,
+    time_window_min: ride.time_window_min ?? null,
     route_duration_s: ride.route_duration_s ?? null,
   };
 }
@@ -277,4 +280,49 @@ export async function rankRidesForGesuch(
     a.tier === b.tier ? a.penalty - b.penalty : a.tier === 'full' ? -1 : 1
   );
   return out;
+}
+
+/**
+ * When a passenger books a ride, close any of THEIR OWN active Gesuche that the
+ * booked ride fully satisfies (beta slide 13: a matched Gesuch should not stay
+ * "offen"). We score the ride against each of the passenger's active Gesuche
+ * and mark the fully-matching ones "fulfilled". Seats are passed as 0 because
+ * the passenger just took the seat — availability is irrelevant to whether the
+ * ride covers their route. Fire-and-forget; failures never block the booking.
+ */
+export async function fulfilMatchingGesuche(
+  strapi: any,
+  rideId: number,
+  passengerId: number
+): Promise<void> {
+  const ride = await strapi.db.query('api::ride.ride').findOne({
+    where: { id: rideId },
+    populate: { driver: { select: ['id'] }, waypoints: true },
+  });
+  if (!ride) return;
+  const matchRide = toMatchRide(ride, 0);
+
+  // Only one-off Gesuche auto-close: a recurring "I commute daily" request
+  // shouldn't disappear because the rider booked a single day.
+  const gesuche = await strapi.db.query('api::ride-request.ride-request').findMany({
+    where: { passenger: passengerId, status: 'active', recurrence: 'none' },
+    populate: { passenger: { select: ['id'] } },
+  });
+
+  let closed = 0;
+  for (const g of gesuche) {
+    const score = scoreRideForGesuch(matchRide, toMatchGesuch(g));
+    if (score?.tier === 'full') {
+      await strapi.db.query('api::ride-request.ride-request').update({
+        where: { id: g.id },
+        data: { status: 'fulfilled' },
+      });
+      closed++;
+    }
+  }
+  if (closed > 0) {
+    strapi.log.info(
+      `[matching] booking on ride ${rideId}: closed ${closed} matching Gesuch(e) for user ${passengerId}.`
+    );
+  }
 }
