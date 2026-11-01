@@ -1,7 +1,7 @@
 # Nominatim/OSRM are NOT exposed publicly — the frontend reaches them through
 # its own /api/geo/* proxy over the internal network. Only two public hosts:
 {
-	email kontakt@foerderverein-binnenmarsch.de
+	email drage@sg-elbmarsch.de
 }
 
 elb-fahrt.de {

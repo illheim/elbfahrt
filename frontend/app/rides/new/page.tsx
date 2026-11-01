@@ -228,7 +228,7 @@ export default function NewRidePage() {
           radiusM={originRadiusM}
         />
         <RadiusSlider
-          label="Wie weit vom Start dürfen Sie abholen?"
+          label="Wie weit vom Start holen Sie ab?"
           value={originRadiusM}
           onChange={setOriginRadiusM}
         />
@@ -240,15 +240,9 @@ export default function NewRidePage() {
           radiusM={destinationRadiusM}
         />
         <RadiusSlider
-          label="Wie weit vom Ziel dürfen Sie absetzen?"
+          label="Wie weit vom Ziel setzen Sie ab?"
           value={destinationRadiusM}
           onChange={setDestinationRadiusM}
-        />
-
-        <TimeWindowSlider
-          label="Wie flexibel ist Ihre Abfahrtszeit?"
-          value={timeWindowMin}
-          onChange={setTimeWindowMin}
         />
 
         <div className="flex flex-col gap-2">
@@ -351,6 +345,14 @@ export default function NewRidePage() {
             />
           </label>
         </div>
+
+        {/* Directly under the departure field (beta Lfd 10/13–15): the
+            flexibility refers to the departure time, not the arrival. */}
+        <TimeWindowSlider
+          label="Wie flexibel ist Ihre Abfahrtszeit?"
+          value={timeWindowMin}
+          onChange={setTimeWindowMin}
+        />
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium text-neutral-800">

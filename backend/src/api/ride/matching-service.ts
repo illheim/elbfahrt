@@ -9,7 +9,9 @@
  */
 
 import {
+  localParts,
   matchRideToRequest,
+  nextCommonDate,
   scoreRideForGesuch,
   type MatchRide,
   type MatchGesuch,
@@ -21,6 +23,7 @@ export interface RankedRide {
   ride: any; // raw entity; the caller (me controller) projects PII-safe fields
   tier: 'full' | 'partial';
   penalty: number;
+  matchDate: string | null; // concrete day the ride fits (YYYY-MM-DD)
 }
 
 const num = (v: unknown): number =>
@@ -269,11 +272,19 @@ export async function rankRidesForGesuch(
     populate: { driver: { select: ['id', ...SAFE_USER_FIELDS] }, waypoints: true },
   });
 
+  const today = localParts(new Date().toISOString()).ymd;
   const out: RankedRide[] = [];
   for (const ride of rides) {
     const matchRide = toMatchRide(ride, await seatsConfirmed(strapi, ride.id));
     const score = scoreRideForGesuch(matchRide, matchGesuch);
-    if (score) out.push({ ride, tier: score.tier, penalty: score.penalty });
+    if (score) {
+      out.push({
+        ride,
+        tier: score.tier,
+        penalty: score.penalty,
+        matchDate: nextCommonDate(matchRide, matchGesuch, today),
+      });
+    }
   }
 
   out.sort((a, b) =>

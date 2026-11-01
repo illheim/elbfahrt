@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   matchRideToRequest,
   scoreRideForGesuch,
+  nextCommonDate,
   localParts,
   haversineM,
   effectiveRadiusM,
@@ -233,5 +234,45 @@ describe('M4 — scoreRideForGesuch (best match)', () => {
     expect(scoreRideForGesuch(ride(), gesuch({ departure_at: '2026-09-02T06:00:00Z' }))).toBeNull();
     expect(scoreRideForGesuch(ride({ driver_id: 2 }), gesuch())).toBeNull();
     expect(scoreRideForGesuch(ride(), gesuch({ origin: { lat: 54.5, lng: 10.35 } }))).toBeNull();
+  });
+});
+
+describe('nextCommonDate (Lfd 15: concrete date for a recurring match)', () => {
+  // Daily series that started back in August — the list used to show 27.08.
+  const daily = ride({
+    recurrence: 'daily',
+    departure_at: '2026-08-27T06:00:00Z',
+    recurrence_until: '2026-12-31',
+  });
+
+  it('a one-off Gesuch fits on its own date, not the series start', () => {
+    const g = gesuch({ departure_at: '2026-10-07T06:00:00Z' });
+    expect(nextCommonDate(daily, g, '2026-10-01')).toBe('2026-10-07');
+  });
+
+  it('a recurring Gesuch fits on the next shared weekday from today', () => {
+    // Weekly Mo+Mi Gesuch from 01.09.; today Thu 01.10. → next Mon is 05.10.
+    const g = gesuch({
+      recurrence: 'weekly',
+      recurrence_weekdays: [1, 3],
+      departure_at: '2026-09-01T06:00:00Z',
+    });
+    expect(nextCommonDate(daily, g, '2026-10-01')).toBe('2026-10-05');
+  });
+
+  it('respects the ride weekdays and the ride end date', () => {
+    const fridays = ride({
+      recurrence: 'weekly',
+      recurrence_weekdays: [5],
+      departure_at: '2026-09-04T06:00:00Z',
+      recurrence_until: '2026-10-09',
+    });
+    const g = gesuch({ recurrence: 'daily', departure_at: '2026-09-01T06:00:00Z' });
+    expect(nextCommonDate(fridays, g, '2026-10-01')).toBe('2026-10-02');
+    expect(nextCommonDate(fridays, g, '2026-10-10')).toBeNull();
+  });
+
+  it('a one-off ride returns its own date', () => {
+    expect(nextCommonDate(RIDE, GESUCH, '2026-08-30')).toBe('2026-09-01');
   });
 });

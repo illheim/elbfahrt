@@ -9,9 +9,12 @@
  * override that), which throws a confusing "Open FaceTime?" prompt. Desktop
  * users copy the number anyway, so we skip the link there.
  *
- * Detection uses the coarse-pointer media query rather than user-agent
- * sniffing, read via useSyncExternalStore so the server snapshot (desktop)
- * matches the first client render and hydration stays clean.
+ * Detection: a coarse pointer alone isn't enough — touchscreen Windows
+ * laptops report it too, and there `tel:` opens the Windows "choose an app"
+ * dialog (beta feedback). So the tel: link is reserved for phones and tablets
+ * (Android / iOS / iPadOS); everything else gets the copy button. Read via
+ * useSyncExternalStore so the server snapshot (desktop) matches the first
+ * client render and hydration stays clean.
  */
 
 import { useState, useSyncExternalStore } from 'react';
@@ -25,8 +28,15 @@ function subscribe(onChange: () => void): () => void {
   return () => mql.removeEventListener('change', onChange);
 }
 
+function isMobileOs(): boolean {
+  const ua = navigator.userAgent;
+  if (/Android|iPhone|iPad|iPod/i.test(ua)) return true;
+  // iPadOS reports itself as a Mac; tell it apart by its touch points.
+  return /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+}
+
 function getSnapshot(): boolean {
-  return window.matchMedia(COARSE).matches;
+  return window.matchMedia(COARSE).matches && isMobileOs();
 }
 
 // SSR and the first client render assume desktop (false); touch devices
@@ -49,7 +59,7 @@ export function PhoneNumber({ value }: { value: string }) {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setTimeout(() => setCopied(false), 3000);
     } catch {
       // Clipboard unavailable (e.g. non-secure context) — the number stays
       // selectable, so the user can still copy it by hand.
@@ -63,9 +73,10 @@ export function PhoneNumber({ value }: { value: string }) {
         type="button"
         onClick={copy}
         aria-label="Telefonnummer kopieren"
+        title="Nummer kopieren und selbst anrufen"
         className="rounded border border-neutral-300 bg-white px-1.5 py-0.5 text-xs font-medium text-neutral-600 transition hover:bg-neutral-50"
       >
-        {copied ? 'kopiert' : 'kopieren'}
+        {copied ? 'kopiert – bitte selbst anrufen' : 'kopieren'}
       </button>
     </span>
   );

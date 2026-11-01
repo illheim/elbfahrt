@@ -61,6 +61,18 @@ export async function setRequestNotify(
 }
 
 /**
+ * Withdraw the caller's own open Gesuch (beta Lfd 9). Sets it to `cancelled`
+ * rather than deleting the row, so the match-notification ledger stays intact
+ * and the matcher simply stops considering it.
+ */
+export async function cancelRideRequest(documentId: string): Promise<void> {
+  await api(`/api/ride-requests/${documentId}`, {
+    method: 'PUT',
+    body: { data: { status: 'cancelled' } },
+  });
+}
+
+/**
  * The ride-request controller returns only PII-safe passenger fields (like the
  * ride controller's driver), so we type the passenger narrowly.
  */
@@ -123,6 +135,13 @@ export interface GesuchMatch {
   departure_at: string;
   recurrence: Recurrence;
   recurrence_weekdays: number[] | null;
+  recurrence_until: string | null;
+  time_window_min: number | null;
+  /**
+   * The concrete day this ride fits the Gesuch (YYYY-MM-DD) — for a recurring
+   * ride the next common date, not the series start. Null if none is found.
+   */
+  match_date: string | null;
   seats_total: number;
   driver: { first_name: string } | null;
   tier: 'full' | 'partial';

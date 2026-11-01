@@ -26,18 +26,16 @@ export default function DatenschutzPage() {
           <p>
             Verantwortlich im Sinne der DSGVO ist:
             <br />
-            <strong>Förderverein Binnenmarsch e. V.</strong>
+            <strong>Gemeinde Drage</strong>
             <br />
-            Mover Str. 15E, 21423 Drage, Deutschland
-            <br />
-            Vertreten durch: Carsten Becker
+            Drennhäuser Straße 27, 21423 Drage, Deutschland
             <br />
             E-Mail:{' '}
             <a
-              href="mailto:kontakt@foerderverein-binnenmarsch.de"
+              href="mailto:drage@sg-elbmarsch.de"
               className="text-accent-700 underline"
             >
-              kontakt@foerderverein-binnenmarsch.de
+              drage@sg-elbmarsch.de
             </a>
           </p>
           <p className="mt-2">

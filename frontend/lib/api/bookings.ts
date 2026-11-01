@@ -78,6 +78,13 @@ export interface MyRideRequest {
   destination_address: string;
   departure_at: string;
   recurrence: Recurrence;
+  recurrence_weekdays: number[] | null;
+  recurrence_until: string | null;
+  flexible_origin: boolean;
+  flexible_destination: boolean;
+  origin_radius_m: number | null;
+  destination_radius_m: number | null;
+  time_window_min: number | null;
   notify_on_match: boolean;
 }
 
@@ -90,6 +97,12 @@ export interface MyOfferedRide {
   departure_at: string;
   recurrence: Recurrence;
   recurrence_weekdays: number[] | null;
+  recurrence_until: string | null;
+  flexible_origin: boolean;
+  flexible_destination: boolean;
+  origin_radius_m: number | null;
+  destination_radius_m: number | null;
+  time_window_min: number | null;
   seats_total: number;
 }
 

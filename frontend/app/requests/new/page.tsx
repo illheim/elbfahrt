@@ -194,12 +194,6 @@ export default function NewRequestPage() {
           onChange={setDestinationRadiusM}
         />
 
-        <TimeWindowSlider
-          label="Wie flexibel ist Ihre Uhrzeit?"
-          value={timeWindowMin}
-          onChange={setTimeWindowMin}
-        />
-
         {origin && destination && (
           <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700">
             {routeInfo
@@ -235,6 +229,14 @@ export default function NewRequestPage() {
             />
           </label>
         </div>
+
+        {/* Directly under the departure field (beta Lfd 10/13–15): the
+            flexibility refers to the departure time, not the arrival. */}
+        <TimeWindowSlider
+          label="Wie flexibel ist Ihre Abfahrtszeit?"
+          value={timeWindowMin}
+          onChange={setTimeWindowMin}
+        />
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium text-neutral-800">

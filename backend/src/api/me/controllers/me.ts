@@ -269,7 +269,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const ranked = await rankRidesForGesuch(strapi, gesuch.id);
 
     return {
-      data: ranked.map(({ ride, tier, penalty }) => ({
+      data: ranked.map(({ ride, tier, penalty, matchDate }) => ({
         documentId: ride.documentId,
         origin_address: ride.origin_address,
         destination_address: ride.destination_address,
@@ -280,6 +280,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         departure_at: ride.departure_at,
         recurrence: ride.recurrence,
         recurrence_weekdays: ride.recurrence_weekdays,
+        recurrence_until: ride.recurrence_until ?? null,
+        time_window_min: ride.time_window_min ?? null,
+        match_date: matchDate,
         seats_total: ride.seats_total,
         driver: ride.driver ? { first_name: ride.driver.first_name } : null,
         tier,

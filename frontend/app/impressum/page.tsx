@@ -16,9 +16,9 @@ export default function ImpressumPage() {
             Angaben gemäß § 5 DDG
           </h2>
           <p>
-            Förderverein Binnenmarsch
+            Gemeinde Drage
             <br />
-            Mover Str. 15E
+            Drennhäuser Straße 27
             <br />
             21423 Drage, Deutschland
           </p>
@@ -26,21 +26,14 @@ export default function ImpressumPage() {
         </section>
 
         <section>
-          <h2 className="mb-1 font-semibold text-neutral-900">Vertreten durch</h2>
-          <p>
-            Carsten Becker (vertretungsberechtigter Vorstand nach § 26 BGB)
-          </p>
-        </section>
-
-        <section>
           <h2 className="mb-1 font-semibold text-neutral-900">Kontakt</h2>
           <p>
             E-Mail:{' '}
             <a
-              href="mailto:kontakt@foerderverein-binnenmarsch.de"
+              href="mailto:drage@sg-elbmarsch.de"
               className="text-accent-700 underline"
             >
-              kontakt@foerderverein-binnenmarsch.de
+              drage@sg-elbmarsch.de
             </a>
           </p>
         </section>
@@ -49,7 +42,7 @@ export default function ImpressumPage() {
           <h2 className="mb-1 font-semibold text-neutral-900">
             Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV
           </h2>
-          <p>Carsten Becker, Anschrift wie oben.</p>
+          <p>Michael Hanig, Anschrift wie oben.</p>
         </section>
 
         <section>
@@ -58,7 +51,7 @@ export default function ImpressumPage() {
           </h2>
           <p>
             elb-fahrt.de vermittelt private, nicht gewerbliche
-            Mitfahrgelegenheiten. Der Förderverein Binnenmarsch stellt hierfür
+            Mitfahrgelegenheiten. Die Gemeinde Drage stellt hierfür
             lediglich die technische Plattform bereit und wird nicht
             Vertragspartei der zwischen Fahrer:innen und Mitfahrer:innen
             getroffenen Absprachen. Für die Durchführung der Fahrten,
@@ -76,9 +69,6 @@ export default function ImpressumPage() {
           </p>
         </section>
 
-        <p className="text-xs text-neutral-500">
-          Registereintrag und weitere Pflichtangaben werden ergänzt.
-        </p>
       </div>
     </main>
   );

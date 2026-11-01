@@ -27,6 +27,12 @@ import {
 } from '@/lib/api/requests';
 import { CardSummary } from '@/components/CardSummary';
 import { PhoneNumber } from '@/components/PhoneNumber';
+import {
+  radiusLabel,
+  scheduleLabel,
+  timeFlexLabel,
+  weekdayList,
+} from '@/lib/format';
 
 const RideMap = dynamic(
   () => import('@/components/RideMap').then((m) => m.RideMap),
@@ -433,10 +439,7 @@ function FilterBar({
 
 function RideCard({ ride }: { ride: RideListItem }) {
   const [open, setOpen] = useState(false);
-  const recur = recurrenceLabel(ride);
-  const when = recur
-    ? `${recur} · ${fmtTime(ride.departure_at)} Uhr`
-    : `${fmtDay(ride.departure_at)} · ${fmtTime(ride.departure_at)} Uhr`;
+  const when = scheduleLabel(ride);
 
   return (
     <div className="overflow-hidden rounded-md border border-neutral-300 bg-white">
@@ -464,9 +467,8 @@ function RideCard({ ride }: { ride: RideListItem }) {
             {ride.driver?.first_name && (
               <span className="text-neutral-600">{ride.driver.first_name}</span>
             )}
-            {(ride.flexible_origin || ride.flexible_destination) && (
-              <Badge>±1 km flexibel</Badge>
-            )}
+            {radiusLabel(ride) && <Badge>{radiusLabel(ride)}</Badge>}
+            <Badge>Abfahrt {timeFlexLabel(ride.time_window_min, 0)}</Badge>
           </div>
           <Link
             href={`/rides/${ride.documentId}`}
@@ -488,10 +490,7 @@ function RequestCard({
   canSeeContact: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const recur = recurrenceLabel(request);
-  const when = recur
-    ? `${recur} · ${fmtTime(request.departure_at)} Uhr`
-    : `${fmtDay(request.departure_at)} · ${fmtTime(request.departure_at)} Uhr`;
+  const when = scheduleLabel(request);
 
   return (
     <div className="overflow-hidden rounded-md border border-neutral-300 bg-white">
@@ -526,6 +525,7 @@ function RequestCard({
               </span>
             )}
             {radiusLabel(request) && <Badge>{radiusLabel(request)}</Badge>}
+            <Badge>Abfahrt {timeFlexLabel(request.time_window_min, 30)}</Badge>
           </div>
           {canSeeContact && <ContactReveal documentId={request.documentId ?? ''} />}
         </div>
@@ -661,63 +661,6 @@ function matchesTrip(
   }
   if (f.minSeats > 0 && seats < f.minSeats) return false;
   return true;
-}
-
-/**
- * Flexibility badge for a Gesuch. Derives the effective radius, falling back to
- * the legacy boolean (`radius ?? flexible ? 1000 : 0`) for pre-v2.0 rows, and
- * returns the larger of origin/destination, or null when exact.
- */
-function radiusLabel(r: {
-  flexible_origin: boolean;
-  flexible_destination: boolean;
-  origin_radius_m: number | null;
-  destination_radius_m: number | null;
-}): string | null {
-  const o = r.origin_radius_m ?? (r.flexible_origin ? 1000 : 0);
-  const d = r.destination_radius_m ?? (r.flexible_destination ? 1000 : 0);
-  const m = Math.max(o, d);
-  if (m <= 0) return null;
-  return `± ${(m / 1000).toFixed(1).replace('.', ',')} km flexibel`;
-}
-
-function recurrenceLabel(t: {
-  recurrence: string;
-  recurrence_weekdays: number[] | null;
-}): string | null {
-  if (t.recurrence === 'daily') return 'täglich';
-  if (t.recurrence === 'weekly') return 'wöchentlich';
-  return null;
-}
-
-const WEEKDAY_ABBR = ['', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']; // 1=Mon … 7=Sun
-
-/** Weekday list for a weekly trip (shown in the expanded card), else null. */
-function weekdayList(t: {
-  recurrence: string;
-  recurrence_weekdays: number[] | null;
-}): string | null {
-  if (t.recurrence !== 'weekly') return null;
-  const days = (t.recurrence_weekdays ?? [])
-    .map((d) => WEEKDAY_ABBR[d])
-    .filter(Boolean)
-    .join(', ');
-  return days || null;
-}
-
-function fmtDay(iso: string): string {
-  return new Intl.DateTimeFormat('de-DE', {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-  }).format(new Date(iso));
-}
-
-function fmtTime(iso: string): string {
-  return new Intl.DateTimeFormat('de-DE', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso));
 }
 
 const inputClass =

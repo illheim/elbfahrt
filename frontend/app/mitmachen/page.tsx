@@ -109,10 +109,10 @@ export default function MitmachenPage() {
           Treffpunkte</strong> in unseren Orten. Du bist unsicher, wo Hilfe am
           dringendsten ist? Schreib an{' '}
           <a
-            href="mailto:kontakt@foerderverein-binnenmarsch.de"
+            href="mailto:drage@sg-elbmarsch.de"
             className="text-accent-700 underline"
           >
-            kontakt@foerderverein-binnenmarsch.de
+            drage@sg-elbmarsch.de
           </a>
           .
         </p>

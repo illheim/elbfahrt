@@ -17,8 +17,19 @@ import { ApiError } from '@/lib/api/client';
 import { getRide, type RideListItem } from '@/lib/api/rides';
 import { createBooking } from '@/lib/api/bookings';
 import { Departures } from '@/components/Departures';
+import {
+  radiusLabel,
+  scheduleLabel,
+  timeFlexLabel,
+  weekdayList,
+} from '@/lib/format';
 
-const WEEKDAYS = ['', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']; // 1=Mon … 7=Sun
+/** `?date=YYYY-MM-DD` from a "Passende Fahrten" link pre-selects the booking day. */
+function dateFromQuery(): string {
+  if (typeof window === 'undefined') return '';
+  const d = new URLSearchParams(window.location.search).get('date') ?? '';
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : '';
+}
 
 export default function RideDetailPage() {
   const { user, isLoading } = useRequireAuth();
@@ -43,6 +54,7 @@ export default function RideDetailPage() {
       .then((r) => {
         if (!active) return;
         setRide(r);
+        if (r.recurrence !== 'none') setInstanceDate((cur) => cur || dateFromQuery());
         setStatus('ok');
       })
       .catch((e) => {
@@ -95,7 +107,6 @@ export default function RideDetailPage() {
     return <Centered>Fahrt konnte nicht geladen werden.</Centered>;
   }
 
-  const recur = recurrenceLabel(ride);
   const isOwnRide = ride.driver?.id === user.id;
   const isPastOneOff =
     ride.recurrence === 'none' &&
@@ -124,15 +135,7 @@ export default function RideDetailPage() {
         </div>
 
         <div className="text-sm text-neutral-700">
-          {recur ? (
-            <span>
-              {recur} · ab {fmtTime(ride.departure_at)} Uhr
-            </span>
-          ) : (
-            <span>
-              {fmtDay(ride.departure_at)} · {fmtTime(ride.departure_at)} Uhr
-            </span>
-          )}
+          {scheduleLabel(ride, true)}
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
@@ -142,9 +145,8 @@ export default function RideDetailPage() {
           {ride.driver?.first_name && (
             <Badge>Fahrer:in: {ride.driver.first_name}</Badge>
           )}
-          {(ride.flexible_origin || ride.flexible_destination) && (
-            <Badge>±1 km flexibel</Badge>
-          )}
+          {radiusLabel(ride) && <Badge>{radiusLabel(ride)}</Badge>}
+          <Badge>Abfahrt {timeFlexLabel(ride.time_window_min, 0)}</Badge>
         </div>
 
         {ride.notes && (
@@ -192,15 +194,15 @@ export default function RideDetailPage() {
                 type="date"
                 value={instanceDate}
                 min={todayStr}
+                max={ride.recurrence_until ?? undefined}
                 onChange={(e) => setInstanceDate(e.target.value)}
                 className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
               />
-              {ride.recurrence === 'weekly' && ride.recurrence_weekdays?.length ? (
+              {weekdayList(ride) && (
                 <span className="text-xs text-neutral-500">
-                  Diese Fahrt fährt:{' '}
-                  {ride.recurrence_weekdays.map((d) => WEEKDAYS[d]).join(', ')}
+                  Diese Fahrt fährt: {weekdayList(ride)}
                 </span>
-              ) : null}
+              )}
             </label>
           )}
 
@@ -272,31 +274,4 @@ function bookingErrorMessage(e: unknown): string {
     default:
       return 'Diese Fahrt kann gerade nicht gebucht werden. Bitte laden Sie die Seite neu.';
   }
-}
-
-function recurrenceLabel(r: RideListItem): string | null {
-  if (r.recurrence === 'daily') return 'täglich';
-  if (r.recurrence === 'weekly') {
-    const days = (r.recurrence_weekdays ?? [])
-      .map((d) => WEEKDAYS[d])
-      .filter(Boolean)
-      .join(', ');
-    return days ? `wöchentlich · ${days}` : 'wöchentlich';
-  }
-  return null;
-}
-
-function fmtDay(iso: string): string {
-  return new Intl.DateTimeFormat('de-DE', {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-  }).format(new Date(iso));
-}
-
-function fmtTime(iso: string): string {
-  return new Intl.DateTimeFormat('de-DE', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso));
 }

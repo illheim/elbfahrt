@@ -26,10 +26,19 @@ import { cancelRide } from '@/lib/api/rides';
 import {
   setRequestNotify,
   getGesuchMatches,
+  cancelRideRequest,
   type GesuchMatch,
 } from '@/lib/api/requests';
 import { CardSummary } from '@/components/CardSummary';
 import { PhoneNumber } from '@/components/PhoneNumber';
+import {
+  fmtWhen,
+  fmtYmd,
+  fmtYmdAt,
+  radiusLabel,
+  scheduleLabel,
+  timeFlexLabel,
+} from '@/lib/format';
 import type { BookingStatus } from '@/lib/api/types';
 
 // Shared style for the per-tab create button: light by default, fills dark on
@@ -94,6 +103,16 @@ export default function MyTripsPage() {
       await load();
     } catch {
       setError('Absagen nicht möglich. Bitte erneut versuchen.');
+    }
+  }
+
+  async function onCancelRequest(documentId: string) {
+    if (!window.confirm('Gesuch wirklich löschen?')) return;
+    try {
+      await cancelRideRequest(documentId);
+      await load();
+    } catch {
+      setError('Löschen nicht möglich. Bitte erneut versuchen.');
     }
   }
 
@@ -196,7 +215,11 @@ export default function MyTripsPage() {
                     </p>
                   )}
                   {myRequests.map((r) => (
-                    <RequestCard key={`req-${r.documentId ?? r.id}`} request={r} />
+                    <RequestCard
+                      key={`req-${r.documentId ?? r.id}`}
+                      request={r}
+                      onDelete={() => onCancelRequest(r.documentId)}
+                    />
                   ))}
                 </>
               )
@@ -267,8 +290,8 @@ function TripCard({
   const [open, setOpen] = useState(false);
   if (!ride) return null;
   const when = instanceDate
-    ? fmtDate(instanceDate)
-    : `${fmtDay(ride.departure_at)} · ${fmtTime(ride.departure_at)} Uhr`;
+    ? fmtYmdAt(instanceDate, ride.departure_at)
+    : fmtWhen(ride.departure_at);
   const name = contact
     ? [contact.first_name, contact.last_name].filter(Boolean).join(' ')
     : null;
@@ -313,7 +336,13 @@ function TripCard({
  * A greyed card for the caller's own open Gesuch — posted but not yet a booked
  * ride, so it's visually muted and badged to set it apart from actual bookings.
  */
-function RequestCard({ request }: { request: MyRideRequest }) {
+function RequestCard({
+  request,
+  onDelete,
+}: {
+  request: MyRideRequest;
+  onDelete: () => void;
+}) {
   const [open, setOpen] = useState(false);
   // Legacy Gesuche have null (treated as opt-in by the matcher) — show as on.
   const [notify, setNotify] = useState(request.notify_on_match ?? true);
@@ -321,10 +350,7 @@ function RequestCard({ request }: { request: MyRideRequest }) {
   // Matching rides, loaded lazily the first time the card is expanded.
   const [matches, setMatches] = useState<GesuchMatch[] | null>(null);
   const [matchesError, setMatchesError] = useState(false);
-  const recurring = request.recurrence && request.recurrence !== 'none';
-  const when = `${fmtDay(request.departure_at)} · ${fmtTime(
-    request.departure_at
-  )} Uhr${recurring ? ' · regelmäßig' : ''}`;
+  const when = scheduleLabel(request);
 
   async function toggleNotify(next: boolean) {
     setNotify(next);
@@ -368,6 +394,7 @@ function RequestCard({ request }: { request: MyRideRequest }) {
             <span className="text-neutral-300">↓</span>
             <span>{request.destination_address}</span>
           </div>
+          <FlexChips trip={request} timeFallback={30} />
 
           <div className="flex flex-col gap-2 pt-1">
             <span className="text-xs font-medium uppercase tracking-wide text-neutral-400">
@@ -405,6 +432,8 @@ function RequestCard({ request }: { request: MyRideRequest }) {
           <div className="text-xs text-neutral-400">
             Sichtbar für Fahrer:innen · wartet auf eine passende Fahrt.
           </div>
+
+          <CancelButton onClick={onDelete}>Gesuch löschen</CancelButton>
         </div>
       )}
       {/* Always visible so it's reachable from the overview (and the email's
@@ -438,10 +467,7 @@ function OfferedRideCard({
   onCancel: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const recurring = ride.recurrence && ride.recurrence !== 'none';
-  const when = `${fmtDay(ride.departure_at)} · ${fmtTime(
-    ride.departure_at
-  )} Uhr${recurring ? ' · regelmäßig' : ''}`;
+  const when = scheduleLabel(ride);
 
   return (
     <div className="overflow-hidden rounded-md border border-neutral-200 bg-neutral-50">
@@ -466,6 +492,7 @@ function OfferedRideCard({
             <span className="text-neutral-300">↓</span>
             <span>{ride.destination_address}</span>
           </div>
+          <FlexChips trip={ride} timeFallback={0} />
 
           {bookings.length > 0 ? (
             <div className="flex flex-col gap-1">
@@ -484,7 +511,7 @@ function OfferedRideCard({
                     {b.instance_date && (
                       <span className="text-neutral-400">
                         {' '}
-                        · {fmtDate(b.instance_date)}
+                        · {fmtYmd(b.instance_date)}
                       </span>
                     )}
                     {b.passenger?.mobile && (
@@ -513,13 +540,19 @@ function OfferedRideCard({
 
 /** One matching ride under a Gesuch — links to the ride's detail/booking page. */
 function MatchRow({ match }: { match: GesuchMatch }) {
-  const recurring = match.recurrence && match.recurrence !== 'none';
-  const when = `${fmtDay(match.departure_at)} · ${fmtTime(
-    match.departure_at
-  )} Uhr${recurring ? ' · regelmäßig' : ''}`;
+  // Show the day the ride actually fits this Gesuch (Lfd 15) — for a recurring
+  // ride that's the next common date, not when the series started.
+  const recurring = match.recurrence !== 'none';
+  const when = match.match_date
+    ? `${fmtYmdAt(match.match_date, match.departure_at)}${recurring ? ' · regelmäßig' : ''}`
+    : scheduleLabel(match);
+  const href =
+    recurring && match.match_date
+      ? `/rides/${match.documentId}?date=${match.match_date}`
+      : `/rides/${match.documentId}`;
   return (
     <Link
-      href={`/rides/${match.documentId}`}
+      href={href}
       className="block rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm transition hover:border-neutral-300 hover:bg-neutral-50"
     >
       <div className="font-medium text-neutral-800">
@@ -530,8 +563,34 @@ function MatchRow({ match }: { match: GesuchMatch }) {
       <div className="text-xs text-neutral-500">
         {when}
         {match.driver?.first_name && ` · ${match.driver.first_name}`}
+        {` · Abfahrt ${timeFlexLabel(match.time_window_min, 0)}`}
       </div>
     </Link>
+  );
+}
+
+/** Spatial + time flexibility chips; time is shown even at ± 0 min (Lfd 12–15). */
+function FlexChips({
+  trip,
+  timeFallback,
+}: {
+  trip: Parameters<typeof radiusLabel>[0] & { time_window_min: number | null };
+  timeFallback: number;
+}) {
+  const radius = radiusLabel(trip);
+  return (
+    <div className="flex flex-wrap gap-1.5 text-xs">
+      {radius && <Chip>{radius}</Chip>}
+      <Chip>Abfahrt {timeFlexLabel(trip.time_window_min, timeFallback)}</Chip>
+    </div>
+  );
+}
+
+function Chip({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-neutral-600">
+      {children}
+    </span>
   );
 }
 
@@ -581,28 +640,4 @@ function StatusBadge({ status }: { status: BookingStatus }) {
       {label}
     </span>
   );
-}
-
-function fmtDate(ymd: string): string {
-  return new Intl.DateTimeFormat('de-DE', {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(`${ymd}T00:00:00`));
-}
-
-function fmtDay(iso: string): string {
-  return new Intl.DateTimeFormat('de-DE', {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-  }).format(new Date(iso));
-}
-
-function fmtTime(iso: string): string {
-  return new Intl.DateTimeFormat('de-DE', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso));
 }

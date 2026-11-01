@@ -149,6 +149,42 @@ export function datesCompatible(ride: MatchRide, gesuch: MatchGesuch): boolean {
   return rw.some((d) => gw.includes(d));
 }
 
+/** Add n days to a YYYY-MM-DD date (calendar arithmetic, no time zone). */
+function addDays(ymd: string, n: number): string {
+  const [y, m, d] = ymd.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+
+/** ISO weekday (1=Mon … 7=Sun) of a YYYY-MM-DD date. */
+function ymdWeekday(ymd: string): number {
+  const [y, m, d] = ymd.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay() || 7;
+}
+
+/**
+ * The first calendar day (≥ `today`, YYYY-MM-DD) on which both the ride and the
+ * Gesuch run — i.e. the concrete date a ride fits a Gesuch. For a recurring
+ * ride this replaces the series start date in the "Passende Fahrten" list
+ * (beta Lfd 15). Null if they share no upcoming day (searched up to a year).
+ */
+export function nextCommonDate(
+  ride: MatchRide,
+  gesuch: MatchGesuch,
+  today: string
+): string | null {
+  const [rs, re] = dateRange(ride);
+  const [gs, ge] = dateRange(gesuch);
+  const from = [today, rs, gs].sort()[2];
+  const until = [re, ge, addDays(from, 366)].sort()[0];
+  const rw = weekdaysOf(ride);
+  const gw = weekdaysOf(gesuch);
+  for (let day = from; day <= until; day = addDays(day, 1)) {
+    const wd = ymdWeekday(day);
+    if (rw.includes(wd) && gw.includes(wd)) return day;
+  }
+  return null;
+}
+
 /** The ride's own flexibility radius at sequence index i (waypoints are exact). */
 function rideRadiusAt(ride: MatchRide, i: number, len: number): number {
   if (i === 0) return effectiveRadiusM(ride.origin_radius_m, ride.flexible_origin);
