@@ -12,8 +12,8 @@ export interface GeoWaypoint extends Struct.ComponentSchema {
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 500;
       }>;
-    lat: Schema.Attribute.Decimal & Schema.Attribute.Required;
-    lng: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    lat: Schema.Attribute.Float & Schema.Attribute.Required;
+    lng: Schema.Attribute.Float & Schema.Attribute.Required;
   };
 }
 

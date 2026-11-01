@@ -27,10 +27,10 @@
       "required": true,
       "maxLength": 500
     },
-    "origin_lat": { "type": "decimal", "required": true },
-    "origin_lng": { "type": "decimal", "required": true },
-    "destination_lat": { "type": "decimal", "required": true },
-    "destination_lng": { "type": "decimal", "required": true },
+    "origin_lat": { "type": "float", "required": true },
+    "origin_lng": { "type": "float", "required": true },
+    "destination_lat": { "type": "float", "required": true },
+    "destination_lng": { "type": "float", "required": true },
     "waypoints": {
       "type": "component",
       "repeatable": true,

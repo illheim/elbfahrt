@@ -569,8 +569,8 @@ export interface ApiRideRequestRideRequest extends Struct.CollectionTypeSchema {
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 500;
       }>;
-    destination_lat: Schema.Attribute.Decimal & Schema.Attribute.Required;
-    destination_lng: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    destination_lat: Schema.Attribute.Float & Schema.Attribute.Required;
+    destination_lng: Schema.Attribute.Float & Schema.Attribute.Required;
     destination_radius_m: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<
         {
@@ -597,8 +597,8 @@ export interface ApiRideRequestRideRequest extends Struct.CollectionTypeSchema {
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 500;
       }>;
-    origin_lat: Schema.Attribute.Decimal & Schema.Attribute.Required;
-    origin_lng: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    origin_lat: Schema.Attribute.Float & Schema.Attribute.Required;
+    origin_lng: Schema.Attribute.Float & Schema.Attribute.Required;
     origin_radius_m: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<
         {
@@ -669,8 +669,8 @@ export interface ApiRideRide extends Struct.CollectionTypeSchema {
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 500;
       }>;
-    destination_lat: Schema.Attribute.Decimal & Schema.Attribute.Required;
-    destination_lng: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    destination_lat: Schema.Attribute.Float & Schema.Attribute.Required;
+    destination_lng: Schema.Attribute.Float & Schema.Attribute.Required;
     destination_radius_m: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<
         {
@@ -696,8 +696,8 @@ export interface ApiRideRide extends Struct.CollectionTypeSchema {
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 500;
       }>;
-    origin_lat: Schema.Attribute.Decimal & Schema.Attribute.Required;
-    origin_lng: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    origin_lat: Schema.Attribute.Float & Schema.Attribute.Required;
+    origin_lng: Schema.Attribute.Float & Schema.Attribute.Required;
     origin_radius_m: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<
         {

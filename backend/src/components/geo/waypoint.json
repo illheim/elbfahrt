@@ -7,7 +7,7 @@
   "options": {},
   "attributes": {
     "address": { "type": "string", "required": true, "maxLength": 500 },
-    "lat": { "type": "decimal", "required": true },
-    "lng": { "type": "decimal", "required": true }
+    "lat": { "type": "float", "required": true },
+    "lng": { "type": "float", "required": true }
   }
 }
