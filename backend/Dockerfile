@@ -1,14 +1,14 @@
 # ============================================================
 #  Strapi 5 backend — elb-fahrt.de
 #  Multi-stage: deps → builder → runtime
-#  Base: node:20-slim (Debian; node:20-alpine causes SWC build failures
+#  Base: node:24-slim (Debian; node:20-alpine causes SWC build failures
 #  on arm64 — see PLAN.md decisions log)
 # ============================================================
 
 # -----------------------------------------------------------
 # Stage 1: deps — install all deps (build toolchain present)
 # -----------------------------------------------------------
-FROM node:20-slim AS deps
+FROM node:24-slim AS deps
 WORKDIR /app
 
 # Native build toolchain for sqlite3 / sharp / etc.
@@ -22,7 +22,7 @@ RUN npm ci
 # -----------------------------------------------------------
 # Stage 2: builder — compile admin panel + TypeScript
 # -----------------------------------------------------------
-FROM node:20-slim AS builder
+FROM node:24-slim AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -34,7 +34,7 @@ RUN npm run build
 # -----------------------------------------------------------
 # Stage 3: runtime — minimal image, runs `strapi start`
 # -----------------------------------------------------------
-FROM node:20-slim AS runtime
+FROM node:24-slim AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production

@@ -1,13 +1,13 @@
 # ============================================================
 #  Next.js 15 frontend — elb-fahrt.de
 #  Multi-stage: deps → builder → runtime
-#  Base: node:20-slim (Debian) — Alpine + SWC arm64 is unreliable
+#  Base: node:24-slim (Debian) — Alpine + SWC arm64 is unreliable
 # ============================================================
 
 # -----------------------------------------------------------
 # Stage 1: deps
 # -----------------------------------------------------------
-FROM node:20-slim AS deps
+FROM node:24-slim AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -16,7 +16,7 @@ RUN npm ci
 # -----------------------------------------------------------
 # Stage 2: builder
 # -----------------------------------------------------------
-FROM node:20-slim AS builder
+FROM node:24-slim AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -38,7 +38,7 @@ RUN npm run build
 # -----------------------------------------------------------
 # Stage 3: runtime — `next start`
 # -----------------------------------------------------------
-FROM node:20-slim AS runtime
+FROM node:24-slim AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
