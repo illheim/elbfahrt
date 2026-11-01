@@ -173,8 +173,8 @@ export default function RideDetailPage() {
       ) : booked ? (
         <section className="flex flex-col gap-3 rounded-md border border-green-300 bg-green-50 p-4">
           <p className="text-sm font-medium text-green-900">
-            Platz gebucht! Die Fahrer:in wird informiert. Die Kontaktdaten finden
-            Sie unter „Meine Fahrten“.
+            Platz gebucht! Sie und die Fahrer:in erhalten eine Bestätigung per
+            E-Mail. Die Kontaktdaten finden Sie auch unter „Meine Fahrten“.
           </p>
           <Link
             href="/"

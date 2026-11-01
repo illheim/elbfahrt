@@ -23,6 +23,7 @@ import { factories } from '@strapi/strapi';
 import { errors } from '@strapi/utils';
 import { SAFE_USER_FIELDS } from '../../../utils/safe-user';
 import { cappedRecurrenceUntil } from '../../../utils/recurrence';
+import { notifyBookingLater } from '../../booking/booking-notify';
 
 const { ForbiddenError, NotFoundError, UnauthorizedError } = errors;
 
@@ -137,7 +138,8 @@ export default factories.createCoreController('api::ride.ride', ({ strapi }) => 
     const result = await super.update(ctx);
 
     // Cancelling a ride also cancels its outstanding bookings, so passengers
-    // see it as cancelled (and the seats free up).
+    // see it as cancelled (and the seats free up) — and each passenger is
+    // emailed that the ride was called off.
     if (ctx.request.body?.data?.status === 'cancelled') {
       const ride = await strapi.documents('api::ride.ride').findOne({
         documentId: ctx.params.id,
@@ -153,6 +155,7 @@ export default factories.createCoreController('api::ride.ride', ({ strapi }) => 
             where: { id: b.id },
             data: { status: 'cancelled_by_driver' },
           });
+          notifyBookingLater(strapi, b.id, 'ride_cancelled');
         }
       }
     }

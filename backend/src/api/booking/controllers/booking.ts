@@ -15,6 +15,10 @@
  *     for one specific date, not the whole series).
  *   - `booked_at` and `status` are set server-side, never trusted from input.
  *
+ * Emails (booking-notify.ts, fire-and-forget): on create the passenger gets a
+ * confirmation and the driver a "neue Buchung"; on cancellation the other side
+ * is told. A booking that is already cancelled doesn't re-send.
+ *
  * update/delete: allowed only for the booking's passenger OR the ride's
  * driver (the driver may cancel → cancelled_by_driver). The `ride` and
  * `passenger` relations can never be reassigned.
@@ -29,6 +33,7 @@ import { factories } from '@strapi/strapi';
 import { errors } from '@strapi/utils';
 import { SAFE_USER_FIELDS } from '../../../utils/safe-user';
 import { fulfilMatchingGesuche } from '../../ride/matching-service';
+import { notifyBookingLater } from '../booking-notify';
 import {
   buildBookingScope,
   evaluateBooking,
@@ -204,6 +209,10 @@ export default factories.createCoreController('api::booking.booking', ({ strapi 
       strapi.log.error(`[matching] fulfil-on-booking failed for ride ${ride.id}: ${err}`)
     );
 
+    // Tell both sides (Lfd 16: "es wurden keine E-Mails erzeugt").
+    notifyBookingLater(strapi, entity.id, 'confirmation');
+    notifyBookingLater(strapi, entity.id, 'new_booking');
+
     const sanitizedEntity = await this.sanitizeOutput(entity, ctx);
     ctx.status = 201;
     return this.transformResponse(sanitizedEntity);
@@ -223,12 +232,23 @@ export default factories.createCoreController('api::booking.booking', ({ strapi 
     // matches who is cancelling (passenger vs. the ride's driver) and ignore any
     // other fields in the body — the seat and its holder are otherwise fixed.
     const isPassenger = booking.passenger?.id === user.id;
+    const wasConfirmed = booking.status === 'confirmed';
     ctx.request.body = {
       data: {
         status: isPassenger ? 'cancelled_by_passenger' : 'cancelled_by_driver',
       },
     };
-    return super.update(ctx);
+    const result = await super.update(ctx);
+
+    // Tell the other side — only on the actual change, not on a repeat cancel.
+    if (wasConfirmed) {
+      notifyBookingLater(
+        strapi,
+        booking.id,
+        isPassenger ? 'cancelled_by_passenger' : 'cancelled_by_driver'
+      );
+    }
+    return result;
   },
 
   async delete(ctx) {
