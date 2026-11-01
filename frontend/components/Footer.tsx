@@ -12,7 +12,7 @@ export function Footer() {
         <LogoutLink />
 
         <div className="flex items-center gap-2">
-          <span className="text-neutral-500">© 2026 Förderverein Binnenmarsch</span>
+          <span className="text-neutral-500">© 2026 Gemeinde Drage</span>
           <a
             href="https://github.com/illheim/elbfahrt"
             target="_blank"
